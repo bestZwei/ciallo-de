@@ -21,9 +21,10 @@
     rgba(255, 255, 255, 0.05) 0%,
     transparent 50%
   );
+  z-index: 2000; /* Ensure it's above everything else */
 }
 .box span {
-  z-index: 1001; /* Higher than click animations */
+  z-index: 2001; /* Higher than the container and all other elements */
   position: relative;
   top: 20px;
   font-size: clamp(2rem, 8vw, 5rem);

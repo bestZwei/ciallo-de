@@ -36,7 +36,7 @@ const Ciallo = ({ dur = 20, color = 'red', size = "15px", top = "0px", lane = 0 
                 color: color, 
                 fontSize: size,
                 top: adjustedTop,
-                zIndex: 100 - lane, // Higher lanes appear behind lower ones
+                zIndex: 500 - lane, // Ensure all lanes are below Jumper component (z-index 2000)
                 '--speed-variation': speedVariation,
             }} 
         >

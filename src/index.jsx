@@ -289,7 +289,7 @@ const App = () => {
             font-weight: bold;
             font-size: ${fontSize}px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3), 0 0 10px currentColor;
-            z-index: 1000;
+            z-index: 1500;
             pointer-events: none;
             user-select: none;
             will-change: transform, opacity;

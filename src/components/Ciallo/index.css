@@ -23,6 +23,7 @@
   position: absolute;
   left: 0;
   width: 100vw;
+  z-index: 500; /* Lower z-index to be below Jumper component */
   /* Add custom properties for dynamic animation */
   --vertical-drift: 0px;
   --speed-variation: 1;
