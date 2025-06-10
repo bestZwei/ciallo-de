@@ -16,17 +16,17 @@
 }
 @keyframes ciallo-animate {
   0% {
-    transform: translate(0, 0) rotate(0deg);
+    transform: translate(0, 0);
     opacity: 0;
   }
   10% {
-    opacity: 1;
+    opacity: 1 rotate(0deg);
   }
   90% {
     opacity: 1;
   }
   100% {
-    transform: translate(-115%, 0) rotate(5deg);
+    transform: translate(-115%, 0);
     opacity: 0;
   }
 }
