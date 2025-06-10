@@ -9,8 +9,10 @@
 }
 
 .ciallo {
-  margin: 0%;
-  padding-left: 100%;
+  margin: 0;
+  position: absolute;
+  top: 0;
+  left: 100%;
   white-space: nowrap;
   animation: ciallo-animate 15s linear infinite;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
@@ -52,7 +54,7 @@
     opacity: 1;
   }
   100% {
-    transform: translate3d(-115%, 0, 0);
+    transform: translate3d(-100vw, 0, 0);
     opacity: 0;
   }
 }
