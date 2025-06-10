@@ -1,3 +1,13 @@
+/* 全局禁用文本选择 */
+* {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .ciallo {
   /* display: inline-block;*/
   margin: 0%;

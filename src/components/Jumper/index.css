@@ -9,6 +9,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 .box span {
   z-index: 1;
@@ -17,6 +21,10 @@
   font-size: 5rem;
   display: inline-block;
   animation: bounce 0.3s ease infinite alternate;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 @keyframes bounce {
