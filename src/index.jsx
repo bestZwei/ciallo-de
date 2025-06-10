@@ -6,7 +6,22 @@ import WelcomeModal from './components/WelcomeModal';
 // TODO:晚点改成cdn形式
 import meguru from './assets/meguru.aac'
 
-// Enhanced colorMap with more variety
+// Enhanced colorMap with track management
+const createTrackSystem = () => {
+    const screenHeight = window.innerHeight;
+    const trackCount = Math.max(6, Math.floor(screenHeight / 80)); // Minimum 6 tracks, or 1 track per 80px
+    const trackHeight = screenHeight / trackCount;
+    
+    return Array.from({ length: trackCount }, (_, index) => ({
+        id: index,
+        topPosition: Math.floor(index * trackHeight + trackHeight * 0.1), // 10% padding from track edges
+        bottomPosition: Math.floor((index + 1) * trackHeight - trackHeight * 0.1),
+        lastUsedTime: 0,
+        cooldownPeriod: 5000, // 5 seconds cooldown
+        activeElements: new Set(), // Track active elements in this lane
+    }));
+};
+
 const colorMap = [{
     dur: 18,
     color: 'red',
@@ -66,6 +81,7 @@ const App = () => {
     const audioObjectsRef = useRef([]);
     const audioInitializedRef = useRef(false);
     const occupiedAreasRef = useRef(new Set()); // Track occupied grid cells
+    const trackSystemRef = useRef(createTrackSystem()); // Track system for collision avoidance
     const maxAnimations = window.innerWidth <= 768 ? 3 : 8;
 
     // Grid system for collision detection
@@ -116,6 +132,46 @@ const App = () => {
         keys.forEach(key => occupiedAreasRef.current.delete(key));
     };
 
+    // Enhanced track-based collision detection
+    const findAvailableTrack = (preferredY) => {
+        const currentTime = Date.now();
+        const tracks = trackSystemRef.current;
+        
+        // Find the track closest to preferred Y position
+        let bestTrack = null;
+        let minDistance = Infinity;
+        
+        for (const track of tracks) {
+            // Check if track is available (not in cooldown)
+            if (currentTime - track.lastUsedTime < track.cooldownPeriod) {
+                continue;
+            }
+            
+            // Calculate distance from preferred position
+            const trackCenterY = (track.topPosition + track.bottomPosition) / 2;
+            const distance = Math.abs(preferredY - trackCenterY);
+            
+            if (distance < minDistance) {
+                minDistance = distance;
+                bestTrack = track;
+            }
+        }
+        
+        // If no track available, find the one with shortest remaining cooldown
+        if (!bestTrack) {
+            let shortestCooldown = Infinity;
+            for (const track of tracks) {
+                const remainingCooldown = track.cooldownPeriod - (currentTime - track.lastUsedTime);
+                if (remainingCooldown < shortestCooldown) {
+                    shortestCooldown = remainingCooldown;
+                    bestTrack = track;
+                }
+            }
+        }
+        
+        return bestTrack;
+    };
+
     // Check if position is in center exclusion zone
     const isInCenterZone = (x, y) => {
         const centerX = window.innerWidth / 2;
@@ -131,44 +187,43 @@ const App = () => {
         );
     };
 
-    // Find safe position for click animation
+    // Enhanced safe position finding with track system
     const findSafePosition = (originalX, originalY) => {
-        const attempts = 20;
-        const textWidth = 200;
-        const textHeight = 50;
+        const track = findAvailableTrack(originalY);
         
-        for (let i = 0; i < attempts; i++) {
-            let x = originalX;
-            let y = originalY;
+        if (!track) {
+            // Fallback to original method if no track available
+            const attempts = 20;
+            const textWidth = 200;
+            const textHeight = 50;
             
-            if (i > 0) {
-                // Add randomization after first attempt
-                const offsetX = (Math.random() - 0.5) * 300;
-                const offsetY = (Math.random() - 0.5) * 200;
-                x = Math.max(0, Math.min(window.innerWidth - textWidth, originalX + offsetX));
-                y = Math.max(0, Math.min(window.innerHeight - textHeight, originalY + offsetY));
+            for (let i = 0; i < attempts; i++) {
+                let x = originalX;
+                let y = originalY;
+                
+                if (i > 0) {
+                    const offsetX = (Math.random() - 0.5) * 300;
+                    const offsetY = (Math.random() - 0.5) * 200;
+                    x = Math.max(0, Math.min(window.innerWidth - textWidth, originalX + offsetX));
+                    y = Math.max(0, Math.min(window.innerHeight - textHeight, originalY + offsetY));
+                }
+                
+                if (!isInCenterZone(x, y) && !isAreaOccupied(x, y, textWidth, textHeight)) {
+                    return { x, y, track: null };
+                }
             }
             
-            if (!isInCenterZone(x, y) && !isAreaOccupied(x, y, textWidth, textHeight)) {
-                return { x, y };
-            }
+            return { x: originalX, y: originalY, track: null };
         }
         
-        // Fallback: use corner positions
-        const corners = [
-            { x: 50, y: 50 },
-            { x: window.innerWidth - 250, y: 50 },
-            { x: 50, y: window.innerHeight - 100 },
-            { x: window.innerWidth - 250, y: window.innerHeight - 100 }
-        ];
+        // Use track-based positioning
+        const safeY = track.topPosition + Math.random() * (track.bottomPosition - track.topPosition);
+        const safeX = Math.max(50, Math.min(window.innerWidth - 250, originalX + (Math.random() - 0.5) * 200));
         
-        for (const corner of corners) {
-            if (!isAreaOccupied(corner.x, corner.y, textWidth, textHeight)) {
-                return corner;
-            }
-        }
+        // Mark track as used
+        track.lastUsedTime = Date.now();
         
-        return { x: originalX, y: originalY }; // Last resort
+        return { x: safeX, y: safeY, track };
     };
 
     const randomColor = () => {
@@ -245,8 +300,11 @@ const App = () => {
         
         activeAnimationsRef.current++;
         
-        // Occupy the area
+        // Occupy the area and track reference
         const occupiedKeys = occupyArea(safePosition.x, safePosition.y - 20);
+        if (safePosition.track) {
+            safePosition.track.activeElements.add(span);
+        }
         
         const animationDuration = isMobile ? 1800 : 2500;
         const moveDistance = isMobile ? 120 : 200;
@@ -300,9 +358,22 @@ const App = () => {
         animation.onfinish = () => {
             activeAnimationsRef.current--;
             freeArea(occupiedKeys);
+            if (safePosition.track) {
+                safePosition.track.activeElements.delete(span);
+            }
             span.remove();
         }
     }
+
+    // Recreate track system on window resize
+    useEffect(() => {
+        const handleResize = () => {
+            trackSystemRef.current = createTrackSystem();
+        };
+        
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         // 只有当欢迎弹窗关闭后才添加事件监听器

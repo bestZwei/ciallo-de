@@ -23,6 +23,10 @@
   position: absolute;
   left: 0;
   width: 100vw;
+  /* Add custom properties for dynamic animation */
+  --vertical-drift: 0px;
+  --speed-variation: 1;
+  --lane-id: 0;
 }
 
 /* Enhanced hover effects */
@@ -51,21 +55,37 @@
   }
   5% {
     opacity: 1;
+    transform: translate3d(-2%, var(--vertical-drift, 0px), 0) rotate(1deg);
   }
   10% {
-    transform: translate3d(-2%, 0, 0) rotate(1deg);
+    transform: translate3d(-5%, calc(var(--vertical-drift, 0px) * 0.5), 0) rotate(0.5deg);
+  }
+  25% {
+    transform: translate3d(-25%, calc(var(--vertical-drift, 0px) * 0.8), 0) rotate(-0.3deg);
   }
   50% {
-    transform: translate3d(-50%, 0, 0) rotate(-0.5deg);
+    transform: translate3d(-50%, var(--vertical-drift, 0px), 0) rotate(-0.5deg);
+  }
+  75% {
+    transform: translate3d(-75%, calc(var(--vertical-drift, 0px) * 0.6), 0) rotate(0.2deg);
   }
   90% {
     opacity: 1;
-    transform: translate3d(-110%, 0, 0) rotate(0.5deg);
+    transform: translate3d(-110%, calc(var(--vertical-drift, 0px) * 0.3), 0) rotate(0.5deg);
   }
   100% {
-    transform: translate3d(-115%, 0, 0) rotate(0deg);
+    transform: translate3d(-115%, 0px, 0) rotate(0deg);
     opacity: 0;
   }
+}
+
+/* Lane-specific optimizations */
+.ciallo:nth-child(odd) {
+  animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.ciallo:nth-child(even) {
+  animation-timing-function: cubic-bezier(0.1, 0.25, 0.1, 1);
 }
 
 /* Simplified background for mobile */
