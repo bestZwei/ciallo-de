@@ -30,7 +30,7 @@ const WelcomeModal = ({ onClose }) => {
                     </div>
                     
                     <p className="welcome-text">
-                        Ciallo～(∠・ω&lt; )⌒★⌒(｡･ω･｡)ﾉ♡ Ciallo~<br/>
+                        Ciallo～(∠・ω&lt; )⌒★⌒(｡･ω･｡)ﾉ♡ <br/>
                         <span className="welcome-subtitle">点击任意地方都会有惊喜哦～</span>
                     </p>
                 </div>
