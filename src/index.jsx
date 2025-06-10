@@ -190,12 +190,18 @@ const App = () => {
         <div style={{
             background: 'linear-gradient(45deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%)',
             minHeight: '100vh',
+            minHeight: '100dvh', // Use dynamic viewport height
             width: '100vw',
             position: 'fixed',
             top: 0,
             left: 0,
             overflow: 'hidden',
-            touchAction: 'manipulation'
+            touchAction: 'manipulation',
+            // Add safe area support for mobile
+            paddingTop: 'env(safe-area-inset-top)',
+            paddingBottom: 'env(safe-area-inset-bottom)',
+            paddingLeft: 'env(safe-area-inset-left)',
+            paddingRight: 'env(safe-area-inset-right)'
         }}>
             {showWelcome && <WelcomeModal onClose={handleWelcomeClose} />}
             
@@ -205,7 +211,7 @@ const App = () => {
             </div>
             <footer style={{
                 position: 'fixed',
-                bottom: '10px',
+                bottom: 'max(10px, env(safe-area-inset-bottom))',
                 right: '15px',
                 fontSize: 'clamp(10px, 2.5vw, 12px)',
                 color: 'rgba(255, 255, 255, 0.6)',
