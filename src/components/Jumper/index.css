@@ -15,9 +15,15 @@
   -ms-user-select: none;
   user-select: none;
   overflow: hidden;
+  /* Add subtle background to indicate protected zone */
+  background: radial-gradient(
+    ellipse 600px 200px at center,
+    rgba(255, 255, 255, 0.05) 0%,
+    transparent 50%
+  );
 }
 .box span {
-  z-index: 1;
+  z-index: 1001; /* Higher than click animations */
   position: relative;
   top: 20px;
   font-size: clamp(2rem, 8vw, 5rem);
@@ -28,6 +34,11 @@
   -ms-user-select: none;
   user-select: none;
   will-change: transform;
+  /* Enhanced text shadow for better visibility */
+  text-shadow: 
+    2px 2px 4px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(255, 255, 255, 0.5),
+    0 0 40px rgba(255, 255, 255, 0.3);
 }
 
 /* Mobile optimizations */

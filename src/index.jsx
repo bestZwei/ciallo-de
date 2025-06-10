@@ -6,57 +6,55 @@ import WelcomeModal from './components/WelcomeModal';
 // TODO:晚点改成cdn形式
 import meguru from './assets/meguru.aac'
 
-// Enhanced colorMap with more variety and better spacing
+// Enhanced colorMap with more variety
 const colorMap = [{
     dur: 18,
     color: 'red',
     size: "clamp(15px, 4vw, 35px)",
-    shadow: '2px 2px 4px rgba(255,0,0,0.3)'
+    top: `${Math.random() * 30 + 10}vh`, // Upper area
+    lane: 0
 }, {
     dur: 22,
     color: 'aqua',
     size: "clamp(18px, 4.5vw, 40px)",
-    shadow: '2px 2px 4px rgba(0,255,255,0.3)'
+    top: `${Math.random() * 30 + 65}vh`, // Lower area
+    lane: 1
 }, {
     dur: 16,
     color: 'coral',
     size: "clamp(12px, 3vw, 25px)",
-    shadow: '1px 1px 3px rgba(255,127,80,0.4)'
+    top: `${Math.random() * 25 + 12}vh`,
+    lane: 2
 }, {
     dur: 15,
     color: 'greenyellow',
     size: "clamp(14px, 3.5vw, 29px)",
-    shadow: '2px 2px 4px rgba(173,255,47,0.3)'
+    top: `${Math.random() * 25 + 70}vh`,
+    lane: 3
 }, {
     dur: 17,
     color: 'gold',
     size: 'clamp(10px, 2.5vw, 18px)',
-    shadow: '1px 1px 2px rgba(255,215,0,0.4)'
+    top: `${Math.random() * 20 + 15}vh`,
+    lane: 4
 }, {
     dur: 20,
     color: 'orange',
     size: 'clamp(20px, 5vw, 50px)',
-    shadow: '3px 3px 6px rgba(255,165,0,0.3)'
+    top: `${Math.random() * 20 + 75}vh`,
+    lane: 5
 }, {
     dur: 16,
     color: 'pink',
     size: 'clamp(25px, 6vw, 60px)',
-    shadow: '2px 2px 5px rgba(255,192,203,0.4)'
+    top: `${Math.random() * 15 + 8}vh`,
+    lane: 6
 }, {
     dur: 25,
     color: 'cyan',
     size: "clamp(14px, 3.5vw, 29px)",
-    shadow: '2px 2px 4px rgba(0,255,255,0.3)'
-}, {
-    dur: 19,
-    color: 'lightgreen',
-    size: "clamp(16px, 4vw, 32px)",
-    shadow: '2px 2px 4px rgba(144,238,144,0.3)'
-}, {
-    dur: 21,
-    color: 'violet',
-    size: "clamp(13px, 3.2vw, 26px)",
-    shadow: '2px 2px 4px rgba(238,130,238,0.3)'
+    top: `${Math.random() * 15 + 80}vh`,
+    lane: 7
 }]
 
 const audioList = [meguru]
@@ -67,46 +65,116 @@ const App = () => {
     const activeAnimationsRef = useRef(0);
     const audioObjectsRef = useRef([]);
     const audioInitializedRef = useRef(false);
-    const occupiedPositionsRef = useRef(new Set());
+    const occupiedAreasRef = useRef(new Set()); // Track occupied grid cells
     const maxAnimations = window.innerWidth <= 768 ? 3 : 8;
 
-    // Position management for bullet screens
-    const getAvailablePosition = () => {
-        const viewportHeight = window.innerHeight;
-        const centerTop = viewportHeight * 0.3;
-        const centerBottom = viewportHeight * 0.7;
-        const minSpacing = window.innerWidth <= 768 ? 60 : 80;
+    // Grid system for collision detection
+    const gridCols = 20;
+    const gridRows = 15;
+    
+    const getGridKey = (x, y) => {
+        const col = Math.floor((x / window.innerWidth) * gridCols);
+        const row = Math.floor((y / window.innerHeight) * gridRows);
+        return `${col}-${row}`;
+    };
+
+    const isAreaOccupied = (x, y, width = 200, height = 50) => {
+        const keys = [];
+        const startCol = Math.floor((x / window.innerWidth) * gridCols);
+        const endCol = Math.floor(((x + width) / window.innerWidth) * gridCols);
+        const startRow = Math.floor((y / window.innerHeight) * gridRows);
+        const endRow = Math.floor(((y + height) / window.innerHeight) * gridRows);
         
-        // Create available zones (avoid center area)
-        const topZone = { start: viewportHeight * 0.05, end: centerTop };
-        const bottomZone = { start: centerBottom, end: viewportHeight * 0.95 };
-        
-        const zones = [topZone, bottomZone];
-        
-        for (const zone of zones) {
-            for (let y = zone.start; y <= zone.end; y += minSpacing) {
-                const positionKey = Math.floor(y / minSpacing) * minSpacing;
-                if (!occupiedPositionsRef.current.has(positionKey)) {
-                    occupiedPositionsRef.current.add(positionKey);
-                    // Auto-clear position after animation
-                    setTimeout(() => {
-                        occupiedPositionsRef.current.delete(positionKey);
-                    }, 3000);
-                    return y;
-                }
+        for (let col = startCol; col <= endCol; col++) {
+            for (let row = startRow; row <= endRow; row++) {
+                keys.push(`${col}-${row}`);
             }
         }
         
-        // Fallback: random position in safe zones
-        const zone = zones[Math.floor(Math.random() * zones.length)];
-        return Math.random() * (zone.end - zone.start) + zone.start;
+        return keys.some(key => occupiedAreasRef.current.has(key));
+    };
+
+    const occupyArea = (x, y, width = 200, height = 50) => {
+        const keys = [];
+        const startCol = Math.floor((x / window.innerWidth) * gridCols);
+        const endCol = Math.floor(((x + width) / window.innerWidth) * gridCols);
+        const startRow = Math.floor((y / window.innerHeight) * gridRows);
+        const endRow = Math.floor(((y + height) / window.innerHeight) * gridRows);
+        
+        for (let col = startCol; col <= endCol; col++) {
+            for (let row = startRow; row <= endRow; row++) {
+                const key = `${col}-${row}`;
+                keys.push(key);
+                occupiedAreasRef.current.add(key);
+            }
+        }
+        
+        return keys;
+    };
+
+    const freeArea = (keys) => {
+        keys.forEach(key => occupiedAreasRef.current.delete(key));
+    };
+
+    // Check if position is in center exclusion zone
+    const isInCenterZone = (x, y) => {
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        const exclusionWidth = Math.min(600, window.innerWidth * 0.8);
+        const exclusionHeight = Math.min(200, window.innerHeight * 0.3);
+        
+        return (
+            x > centerX - exclusionWidth / 2 &&
+            x < centerX + exclusionWidth / 2 &&
+            y > centerY - exclusionHeight / 2 &&
+            y < centerY + exclusionHeight / 2
+        );
+    };
+
+    // Find safe position for click animation
+    const findSafePosition = (originalX, originalY) => {
+        const attempts = 20;
+        const textWidth = 200;
+        const textHeight = 50;
+        
+        for (let i = 0; i < attempts; i++) {
+            let x = originalX;
+            let y = originalY;
+            
+            if (i > 0) {
+                // Add randomization after first attempt
+                const offsetX = (Math.random() - 0.5) * 300;
+                const offsetY = (Math.random() - 0.5) * 200;
+                x = Math.max(0, Math.min(window.innerWidth - textWidth, originalX + offsetX));
+                y = Math.max(0, Math.min(window.innerHeight - textHeight, originalY + offsetY));
+            }
+            
+            if (!isInCenterZone(x, y) && !isAreaOccupied(x, y, textWidth, textHeight)) {
+                return { x, y };
+            }
+        }
+        
+        // Fallback: use corner positions
+        const corners = [
+            { x: 50, y: 50 },
+            { x: window.innerWidth - 250, y: 50 },
+            { x: 50, y: window.innerHeight - 100 },
+            { x: window.innerWidth - 250, y: window.innerHeight - 100 }
+        ];
+        
+        for (const corner of corners) {
+            if (!isAreaOccupied(corner.x, corner.y, textWidth, textHeight)) {
+                return corner;
+            }
+        }
+        
+        return { x: originalX, y: originalY }; // Last resort
     };
 
     const randomColor = () => {
         const colors = [
-            'rgb(255, 105, 180)', 'rgb(135, 206, 250)', 'rgb(255, 165, 0)',
-            'rgb(144, 238, 144)', 'rgb(221, 160, 221)', 'rgb(255, 182, 193)',
-            'rgb(173, 216, 230)', 'rgb(240, 230, 140)', 'rgb(255, 218, 185)'
+            '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7',
+            '#dda0dd', '#98d8c8', '#f7dc6f', '#bb8fce', '#85c1e9'
         ];
         return colors[Math.floor(Math.random() * colors.length)];
     }
@@ -140,53 +208,70 @@ const App = () => {
         
         if (!x || !y) return;
 
-        const span = document.createElement('span')
-        span.innerHTML = 'Ciallo～(∠・ω< )⌒★';
+        const safePosition = findSafePosition(x, y);
+        const span = document.createElement('span');
+        
+        // Enhanced text variations
+        const textVariations = [
+            'Ciallo～(∠・ω< )⌒★',
+            'Ciallo～♪(∠・ω< )⌒☆',
+            'Ciallo～✨(∠・ω< )⌒★',
+            'Ciallo～💫(∠・ω< )⌒☆',
+            'Ciallo～🌟(∠・ω< )⌒★'
+        ];
+        
+        span.innerHTML = textVariations[Math.floor(Math.random() * textVariations.length)];
         
         const isMobile = window.innerWidth <= 768;
-        const fontSize = isMobile ? Math.random() * 10 + 12 : Math.random() * 20 + 15;
-        const randomRotation = (Math.random() - 0.5) * 20; // -10 to 10 degrees
+        const fontSize = isMobile ? Math.random() * 8 + 14 : Math.random() * 15 + 18;
+        const rotation = (Math.random() - 0.5) * 30; // Random rotation
         
         span.style.cssText = `
             position: fixed; 
-            left: ${x}px; 
-            top: ${y - 20}px; 
+            left: ${safePosition.x}px; 
+            top: ${safePosition.y - 20}px; 
             color: ${randomColor()}; 
             font-weight: bold;
             font-size: ${fontSize}px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.4), 0 0 10px currentColor;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3), 0 0 10px currentColor;
             z-index: 1000;
             pointer-events: none;
             user-select: none;
             will-change: transform, opacity;
-            filter: drop-shadow(0 0 5px rgba(255,255,255,0.3));
+            transform: rotate(${rotation}deg);
+            filter: drop-shadow(0 0 5px currentColor);
         `;
         document.body.appendChild(span);
         
         activeAnimationsRef.current++;
         
-        const animationDuration = isMobile ? 1500 : 2000;
-        const moveDistance = isMobile ? 100 : 180;
-        const bounceHeight = isMobile ? 30 : 50;
+        // Occupy the area
+        const occupiedKeys = occupyArea(safePosition.x, safePosition.y - 20);
+        
+        const animationDuration = isMobile ? 1800 : 2500;
+        const moveDistance = isMobile ? 120 : 200;
+        const bounceHeight = Math.random() * 30 + 20;
         
         const animation = span.animate([
             { 
-                transform: `scale(0) rotate(${randomRotation}deg)`, 
+                transform: `scale(0) rotate(${rotation}deg) translateY(0px)`, 
                 opacity: 1,
-                top: `${y - 20}px`,
-                filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.3)) brightness(1.2)'
+                filter: 'drop-shadow(0 0 5px currentColor) hue-rotate(0deg)'
             },
             { 
-                transform: `scale(1.2) rotate(${randomRotation + 5}deg)`, 
+                transform: `scale(1.2) rotate(${rotation + 10}deg) translateY(-${bounceHeight}px)`, 
                 opacity: 1,
-                top: `${y - bounceHeight}px`,
-                filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.4)) brightness(1.1)'
+                filter: 'drop-shadow(0 0 15px currentColor) hue-rotate(180deg)'
             },
             { 
-                transform: `scale(1) rotate(${randomRotation - 3}deg)`, 
+                transform: `scale(1) rotate(${rotation - 5}deg) translateY(-${moveDistance}px)`, 
+                opacity: 0.8,
+                filter: 'drop-shadow(0 0 10px currentColor) hue-rotate(360deg)'
+            },
+            { 
+                transform: `scale(0.8) rotate(${rotation + 15}deg) translateY(-${moveDistance + 50}px)`, 
                 opacity: 0,
-                top: `${y - moveDistance}px`,
-                filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.2)) brightness(1)'
+                filter: 'drop-shadow(0 0 5px currentColor) hue-rotate(180deg)'
             }
         ], {
             duration: animationDuration,
@@ -214,6 +299,7 @@ const App = () => {
         
         animation.onfinish = () => {
             activeAnimationsRef.current--;
+            freeArea(occupiedKeys);
             span.remove();
         }
     }
@@ -257,14 +343,7 @@ const App = () => {
             
             <Jumper />
             <div>
-                {colorMap.map((item, index) => (
-                    <Ciallo 
-                        key={index} 
-                        {...item} 
-                        top={getAvailablePosition()}
-                        delay={Math.random() * 5}
-                    />
-                ))}
+                {colorMap.map((item, index) => <Ciallo key={index} {...item} />)}
             </div>
             <footer style={{
                 position: 'fixed',
