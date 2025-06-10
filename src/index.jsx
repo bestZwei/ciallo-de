@@ -1,7 +1,8 @@
 import { createRoot } from 'react-dom/client';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Ciallo from './components/Ciallo';
 import Jumper from './components/Jumper';
+import WelcomeModal from './components/WelcomeModal';
 // TODO:晚点改成cdn形式
 import meguru from './assets/meguru.aac'
 
@@ -51,6 +52,7 @@ const colorMap = [{
 const audioList = [meguru]
 
 const App = () => {
+    const [showWelcome, setShowWelcome] = useState(true);
     const audioIndexRef = useRef(0);
     const activeAnimationsRef = useRef(0);
     const audioObjectsRef = useRef([]);
@@ -65,34 +67,23 @@ const App = () => {
     }
 
     // 预加载和初始化音频对象
-    useEffect(() => {
-        const initAudio = () => {
-            audioList.forEach((audioSrc, index) => {
-                const audio = new Audio(audioSrc);
-                audio.preload = 'auto';
-                audio.volume = 0.7;
-                audioObjectsRef.current[index] = audio;
-            });
-            audioInitializedRef.current = true;
-        };
+    const initAudio = () => {
+        audioList.forEach((audioSrc, index) => {
+            const audio = new Audio(audioSrc);
+            audio.preload = 'auto';
+            audio.volume = 0.7;
+            audioObjectsRef.current[index] = audio;
+        });
+        audioInitializedRef.current = true;
+    };
 
-        // 在用户首次交互时初始化音频
-        const handleFirstInteraction = () => {
-            if (!audioInitializedRef.current) {
-                initAudio();
-                document.removeEventListener('click', handleFirstInteraction);
-                document.removeEventListener('touchstart', handleFirstInteraction);
-            }
-        };
-
-        document.addEventListener('click', handleFirstInteraction);
-        document.addEventListener('touchstart', handleFirstInteraction);
-
-        return () => {
-            document.removeEventListener('click', handleFirstInteraction);
-            document.removeEventListener('touchstart', handleFirstInteraction);
-        };
-    }, []);
+    const handleWelcomeClose = () => {
+        setShowWelcome(false);
+        // 用户点击欢迎按钮时初始化音频
+        if (!audioInitializedRef.current) {
+            initAudio();
+        }
+    };
 
     const cialloAppend = (event) => {
         // Limit concurrent animations to prevent lag
@@ -178,19 +169,22 @@ const App = () => {
     }
 
     useEffect(() => {
-        const handleTouch = (e) => {
-            e.preventDefault(); // Prevent scrolling on touch
-            cialloAppend(e);
-        };
+        // 只有当欢迎弹窗关闭后才添加事件监听器
+        if (!showWelcome) {
+            const handleTouch = (e) => {
+                e.preventDefault(); // Prevent scrolling on touch
+                cialloAppend(e);
+            };
 
-        document.body.addEventListener('click', cialloAppend);
-        document.body.addEventListener('touchstart', handleTouch, { passive: false });
+            document.body.addEventListener('click', cialloAppend);
+            document.body.addEventListener('touchstart', handleTouch, { passive: false });
 
-        return () => {
-            document.body.removeEventListener('click', cialloAppend);
-            document.body.removeEventListener('touchstart', handleTouch);
+            return () => {
+                document.body.removeEventListener('click', cialloAppend);
+                document.body.removeEventListener('touchstart', handleTouch);
+            }
         }
-    }, []);
+    }, [showWelcome]);
 
     return (
         <div style={{
@@ -203,6 +197,8 @@ const App = () => {
             overflow: 'hidden',
             touchAction: 'manipulation'
         }}>
+            {showWelcome && <WelcomeModal onClose={handleWelcomeClose} />}
+            
             <Jumper />
             <div>
                 {colorMap.map((item, index) => <Ciallo key={index} {...item} />)}
