@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import "./index.css";
 
-const Ciallo = ({ dur = 18, color = 'red', size = "15px", top = "0px", lane = 0 }) => {
+const Ciallo = ({ dur = 18, color = 'red', size = "15px", top = "0px", lane = 0, delay = 0 }) => {
     const elementRef = useRef(null);
     
     // Enhanced lane management with collision detection
@@ -10,9 +10,10 @@ const Ciallo = ({ dur = 18, color = 'red', size = "15px", top = "0px", lane = 0 
     const laneOffset = Math.random() * (laneHeight * 0.6) + (laneHeight * 0.2); // Random position within lane bounds
     const adjustedTop = `${baseLaneTop + laneOffset}px`;
     
-    // Use uniform duration for all barrages
+    // Use passed duration and create continuous intervals
     const finalDuration = dur;
-    const startDelay = Math.random() * 3;
+    // Create continuous flow with base delay + random offset within smaller range
+    const startDelay = delay + Math.random() * 2; // Smaller random range for smoother flow
     
     // Add slight vertical drift to make movement more interesting
     const verticalDrift = (Math.random() - 0.5) * 20; // Up to 20px drift

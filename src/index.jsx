@@ -24,53 +24,61 @@ const createTrackSystem = () => {
 
 // Simplified colorMap with uniform speed
 const colorMap = [{
-    dur: 18,
+    dur: 15,
     color: 'red',
     size: "clamp(15px, 4vw, 35px)",
     top: `${Math.random() * 30 + 10}vh`,
     lane: 0,
+    delay: 0,
 }, {
-    dur: 18,
+    dur: 20,
     color: 'aqua',
     size: "clamp(18px, 4.5vw, 40px)",
     top: `${Math.random() * 30 + 65}vh`,
     lane: 1,
+    delay: 3,
 }, {
-    dur: 18,
+    dur: 16,
     color: 'coral',
     size: "clamp(12px, 3vw, 25px)",
     top: `${Math.random() * 25 + 12}vh`,
     lane: 2,
+    delay: 1,
 }, {
-    dur: 18,
+    dur: 22,
     color: 'greenyellow',
     size: "clamp(14px, 3.5vw, 29px)",
     top: `${Math.random() * 25 + 70}vh`,
     lane: 3,
+    delay: 5,
 }, {
-    dur: 18,
+    dur: 14,
     color: 'gold',
     size: 'clamp(10px, 2.5vw, 18px)',
     top: `${Math.random() * 20 + 15}vh`,
     lane: 4,
+    delay: 2,
 }, {
-    dur: 18,
+    dur: 19,
     color: 'orange',
     size: 'clamp(20px, 5vw, 50px)',
     top: `${Math.random() * 20 + 75}vh`,
     lane: 5,
+    delay: 6,
 }, {
-    dur: 18,
+    dur: 17,
     color: 'pink',
     size: 'clamp(25px, 6vw, 60px)',
     top: `${Math.random() * 15 + 8}vh`,
     lane: 6,
+    delay: 4,
 }, {
-    dur: 18,
+    dur: 21,
     color: 'cyan',
     size: "clamp(14px, 3.5vw, 29px)",
     top: `${Math.random() * 15 + 80}vh`,
     lane: 7,
+    delay: 7,
 }]
 
 const audioList = [meguru]
