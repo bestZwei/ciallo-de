@@ -4,12 +4,46 @@
   padding-left: 100%;
   white-space: nowrap;
   animation: ciallo-animate 15s linear infinite;
+  /* 添加更丰富的视觉效果 */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+  font-weight: bold;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.ciallo:hover {
+  transform: scale(1.1);
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
 }
 @keyframes ciallo-animate {
   0% {
-    transform: translate(0, 0);
+    transform: translate(0, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
   }
   100% {
-    transform: translate(-115%, 0);
+    transform: translate(-115%, 0) rotate(5deg);
+    opacity: 0;
+  }
+}
+/* 添加粒子效果背景 */
+body {
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+}
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }

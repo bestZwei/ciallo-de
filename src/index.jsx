@@ -78,7 +78,6 @@ const colorMap = [{
 const audioList = [meguru]
 
 const App = () => {
-
     let audioIndex = 0;
 
     const randomColor = () => {
@@ -93,13 +92,40 @@ const App = () => {
         const y = event.pageY;
         const span = document.createElement('span')
         span.innerHTML = 'Ciallo～(∠・ω< )⌒★';
-        span.style.cssText = `position: absolute; left: ${x}px; top: ${y - 20}px; color: ${randomColor()}; bold;`;
+        // 添加更丰富的样式和动画效果
+        span.style.cssText = `
+            position: absolute; 
+            left: ${x}px; 
+            top: ${y - 20}px; 
+            color: ${randomColor()}; 
+            font-weight: bold;
+            font-size: ${Math.random() * 20 + 15}px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            z-index: 1000;
+            pointer-events: none;
+            user-select: none;
+        `;
         document.body.appendChild(span);
-        const animation = span.animate({
-            "top": `${y - 180}px`,
-            "opacity": 0
-        }, {
-            duration: 1500,
+        // 添加更复杂的动画效果
+        const animation = span.animate([
+            { 
+                transform: 'scale(0) rotate(0deg)', 
+                opacity: 1,
+                top: `${y - 20}px`
+            },
+            { 
+                transform: 'scale(1.2) rotate(10deg)', 
+                opacity: 1,
+                top: `${y - 60}px`
+            },
+            { 
+                transform: 'scale(1) rotate(-5deg)', 
+                opacity: 0,
+                top: `${y - 180}px`
+            }
+        ], {
+            duration: 2000,
+            easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         });
         new Audio(audioList[audioIndex]).play();
         audioIndex = (audioIndex + 1) % audioList.length;
@@ -117,12 +143,20 @@ const App = () => {
     })
 
     return (
-        <>
+        <div style={{
+            background: 'linear-gradient(45deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%)',
+            minHeight: '100vh',
+            width: '100vw',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            overflow: 'hidden'
+        }}>
             <Jumper />
             <div>
-                {colorMap.map(item => <Ciallo {...item} />)}
+                {colorMap.map((item, index) => <Ciallo key={index} {...item} />)}
             </div>
-        </>
+        </div>
     );
 }
 
