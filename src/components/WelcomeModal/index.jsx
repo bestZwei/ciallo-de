@@ -30,13 +30,13 @@ const WelcomeModal = ({ onClose }) => {
                     </div>
                     
                     <p className="welcome-text">
-                        欢迎来到 Ciallo 的世界！<br/>
+                        Ciallo～(∠・ω&lt; )⌒★⌒(｡･ω･｡)ﾉ♡ Ciallo~<br/>
                         <span className="welcome-subtitle">点击任意地方都会有惊喜哦～</span>
                     </p>
                 </div>
                 
                 <button className="welcome-button" onClick={onClose}>
-                    <span className="button-text">开始 Ciallo！</span>
+                    <span className="button-text">Ciallo！</span>
                     <div className="button-sparkle">✨</div>
                 </button>
                 
