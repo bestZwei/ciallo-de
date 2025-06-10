@@ -24,6 +24,7 @@
     padding: 2rem;
     max-width: 400px;
     width: 90%;
+    margin: 0 auto; /* Ensure horizontal centering */
     box-shadow: 
         0 20px 40px rgba(255, 105, 180, 0.3),
         0 10px 20px rgba(135, 206, 250, 0.2),
@@ -247,8 +248,10 @@
     
     .welcome-modal {
         padding: 1.5rem;
-        margin: 0;
+        margin: 0 auto; /* Ensure horizontal centering on mobile */
         transform: translateY(-5vh); /* Slightly offset upward */
+        width: calc(100% - 2rem); /* Better width calculation for mobile */
+        max-width: 350px;
     }
     
     .sparkle {
