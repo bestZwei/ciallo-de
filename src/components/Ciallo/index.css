@@ -12,7 +12,7 @@
   margin: 0%;
   padding-left: 100%;
   white-space: nowrap;
-  animation: ciallo-animate 15s linear infinite;
+  animation: ciallo-animate 20s linear infinite;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
   font-weight: bold;
   transition: transform 0.2s ease;
@@ -29,7 +29,7 @@
 @media (max-width: 768px) {
   .ciallo {
     text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
-    animation-duration: 12s;
+    animation-duration: 16s;
   }
   .ciallo:hover {
     transform: scale(1.05);
@@ -88,7 +88,7 @@ body {
 /* Reduce animations on low-end devices */
 @media (prefers-reduced-motion: reduce) {
   .ciallo {
-    animation-duration: 20s;
+    animation-duration: 25s;
   }
   body {
     animation: none;
