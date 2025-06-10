@@ -9,35 +9,43 @@ import meguru from './assets/meguru.aac'
 const colorMap = [{
     dur: 12,
     color: 'red',
-    size: "clamp(15px, 4vw, 35px)"
+    size: "clamp(15px, 4vw, 35px)",
+    top: `${Math.random() * 80 + 5}vh`
 }, {
     dur: 15,
     color: 'aqua',
-    size: "clamp(18px, 4.5vw, 40px)"
+    size: "clamp(18px, 4.5vw, 40px)",
+    top: `${Math.random() * 80 + 5}vh`
 }, {
     dur: 11,
     color: 'coral',
-    size: "clamp(12px, 3vw, 25px)"
+    size: "clamp(12px, 3vw, 25px)",
+    top: `${Math.random() * 80 + 5}vh`
 }, {
     dur: 10,
     color: 'greenyellow',
-    size: "clamp(14px, 3.5vw, 29px)"
+    size: "clamp(14px, 3.5vw, 29px)",
+    top: `${Math.random() * 80 + 5}vh`
 }, {
     dur: 12,
     color: 'gold',
-    size: 'clamp(10px, 2.5vw, 18px)'
+    size: 'clamp(10px, 2.5vw, 18px)',
+    top: `${Math.random() * 80 + 5}vh`
 }, {
     dur: 15,
     color: 'orange',
-    size: 'clamp(20px, 5vw, 50px)'
+    size: 'clamp(20px, 5vw, 50px)',
+    top: `${Math.random() * 80 + 5}vh`
 }, {
     dur: 11,
     color: 'pink',
-    size: 'clamp(25px, 6vw, 60px)'
+    size: 'clamp(25px, 6vw, 60px)',
+    top: `${Math.random() * 80 + 5}vh`
 }, {
     dur: 18,
     color: 'cyan',
-    size: "clamp(14px, 3.5vw, 29px)"
+    size: "clamp(14px, 3.5vw, 29px)",
+    top: `${Math.random() * 80 + 5}vh`
 }]
 
 const audioList = [meguru]

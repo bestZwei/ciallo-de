@@ -20,6 +20,9 @@
   will-change: transform;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  position: absolute;
+  left: 0;
+  width: 100vw;
 }
 
 /* Mobile optimizations */
