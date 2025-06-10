@@ -1,8 +1,16 @@
 import React, { useEffect, useRef } from "react";
 import "./index.css";
 
-const Ciallo = ({ dur = 20, color = 'red', size = "15px", top = "0px", lane = 0 }) => {
+const Ciallo = ({ dur = 20, color = 'red', size = "15px", top = "0px", lane = 0, speedTier = 'medium' }) => {
     const elementRef = useRef(null);
+    
+    // Speed tier definitions (fixed speeds)
+    const speedTiers = {
+        slow: 25,    // 25 seconds (slow)
+        medium: 18,  // 18 seconds (medium)
+        fast: 12,    // 12 seconds (fast)
+        variable: dur // Use original duration for variable speed
+    };
     
     // Enhanced lane management with collision detection
     const laneHeight = window.innerHeight / 8; // Assume 8 total lanes
@@ -10,10 +18,20 @@ const Ciallo = ({ dur = 20, color = 'red', size = "15px", top = "0px", lane = 0 
     const laneOffset = Math.random() * (laneHeight * 0.6) + (laneHeight * 0.2); // Random position within lane bounds
     const adjustedTop = `${baseLaneTop + laneOffset}px`;
     
-    // Vary the starting position and speed slightly to create more natural movement
+    // Apply speed based on tier
+    let finalDuration;
+    let speedVariation = 1;
+    
+    if (speedTier === 'variable') {
+        // Only variable tier gets speed variation (minority of barrages)
+        speedVariation = 0.8 + Math.random() * 0.4; // 0.8x to 1.2x speed
+        finalDuration = speedTiers[speedTier] / speedVariation;
+    } else {
+        // Fixed speed tiers (majority of barrages)
+        finalDuration = speedTiers[speedTier];
+    }
+    
     const startDelay = Math.random() * 3;
-    const speedVariation = 0.8 + Math.random() * 0.4; // 0.8x to 1.2x speed
-    const adjustedDuration = dur / speedVariation;
     
     // Add slight vertical drift to make movement more interesting
     const verticalDrift = (Math.random() - 0.5) * 20; // Up to 20px drift
@@ -31,13 +49,14 @@ const Ciallo = ({ dur = 20, color = 'red', size = "15px", top = "0px", lane = 0 
             ref={elementRef}
             className="ciallo" 
             style={{ 
-                animationDuration: `${adjustedDuration}s`, 
+                animationDuration: `${finalDuration}s`, 
                 animationDelay: `${startDelay}s`,
                 color: color, 
                 fontSize: size,
                 top: adjustedTop,
                 zIndex: 500 - lane, // Ensure all lanes are below Jumper component (z-index 2000)
                 '--speed-variation': speedVariation,
+                '--speed-tier': speedTier,
             }} 
         >
             Ciallo～(∠・ω&lt; )⌒★

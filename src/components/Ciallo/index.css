@@ -28,6 +28,30 @@
   --vertical-drift: 0px;
   --speed-variation: 1;
   --lane-id: 0;
+  --speed-tier: 'medium';
+}
+
+/* Speed tier specific styles */
+.ciallo[style*="--speed-tier: 'slow'"] {
+  opacity: 0.9;
+  font-weight: 600;
+}
+
+.ciallo[style*="--speed-tier: 'medium'"] {
+  opacity: 1;
+  font-weight: bold;
+}
+
+.ciallo[style*="--speed-tier: 'fast'"] {
+  opacity: 0.95;
+  font-weight: 700;
+  text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.ciallo[style*="--speed-tier: 'variable'"] {
+  opacity: 0.85;
+  font-weight: 500;
+  filter: brightness(1.1);
 }
 
 /* Enhanced hover effects */

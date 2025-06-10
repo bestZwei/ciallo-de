@@ -22,54 +22,63 @@ const createTrackSystem = () => {
     }));
 };
 
+// Enhanced colorMap with fixed speed tiers
 const colorMap = [{
     dur: 18,
     color: 'red',
     size: "clamp(15px, 4vw, 35px)",
-    top: `${Math.random() * 30 + 10}vh`, // Upper area
-    lane: 0
+    top: `${Math.random() * 30 + 10}vh`,
+    lane: 0,
+    speedTier: 'medium' // Fixed speed tier
 }, {
-    dur: 22,
+    dur: 15,
     color: 'aqua',
     size: "clamp(18px, 4.5vw, 40px)",
-    top: `${Math.random() * 30 + 65}vh`, // Lower area
-    lane: 1
+    top: `${Math.random() * 30 + 65}vh`,
+    lane: 1,
+    speedTier: 'fast' // Fixed speed tier
 }, {
-    dur: 16,
+    dur: 20,
     color: 'coral',
     size: "clamp(12px, 3vw, 25px)",
     top: `${Math.random() * 25 + 12}vh`,
-    lane: 2
+    lane: 2,
+    speedTier: 'slow' // Fixed speed tier
 }, {
-    dur: 15,
+    dur: 22,
     color: 'greenyellow',
     size: "clamp(14px, 3.5vw, 29px)",
     top: `${Math.random() * 25 + 70}vh`,
-    lane: 3
+    lane: 3,
+    speedTier: 'medium' // Fixed speed tier
 }, {
-    dur: 17,
+    dur: 16,
     color: 'gold',
     size: 'clamp(10px, 2.5vw, 18px)',
     top: `${Math.random() * 20 + 15}vh`,
-    lane: 4
+    lane: 4,
+    speedTier: 'fast' // Fixed speed tier
 }, {
-    dur: 20,
+    dur: 25,
     color: 'orange',
     size: 'clamp(20px, 5vw, 50px)',
     top: `${Math.random() * 20 + 75}vh`,
-    lane: 5
+    lane: 5,
+    speedTier: 'slow' // Fixed speed tier
 }, {
-    dur: 16,
+    dur: 19,
     color: 'pink',
     size: 'clamp(25px, 6vw, 60px)',
     top: `${Math.random() * 15 + 8}vh`,
-    lane: 6
+    lane: 6,
+    speedTier: 'variable' // Variable speed (minority)
 }, {
-    dur: 25,
+    dur: 17,
     color: 'cyan',
     size: "clamp(14px, 3.5vw, 29px)",
     top: `${Math.random() * 15 + 80}vh`,
-    lane: 7
+    lane: 7,
+    speedTier: 'variable' // Variable speed (minority)
 }]
 
 const audioList = [meguru]
