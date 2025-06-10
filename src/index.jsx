@@ -6,47 +6,57 @@ import WelcomeModal from './components/WelcomeModal';
 // TODO:晚点改成cdn形式
 import meguru from './assets/meguru.aac'
 
-// Reduce colorMap items for mobile performance
+// Enhanced colorMap with more variety and better spacing
 const colorMap = [{
     dur: 18,
     color: 'red',
     size: "clamp(15px, 4vw, 35px)",
-    top: `${Math.random() * 80 + 5}vh`
+    shadow: '2px 2px 4px rgba(255,0,0,0.3)'
 }, {
     dur: 22,
     color: 'aqua',
     size: "clamp(18px, 4.5vw, 40px)",
-    top: `${Math.random() * 80 + 5}vh`
+    shadow: '2px 2px 4px rgba(0,255,255,0.3)'
 }, {
     dur: 16,
     color: 'coral',
     size: "clamp(12px, 3vw, 25px)",
-    top: `${Math.random() * 80 + 5}vh`
+    shadow: '1px 1px 3px rgba(255,127,80,0.4)'
 }, {
     dur: 15,
     color: 'greenyellow',
     size: "clamp(14px, 3.5vw, 29px)",
-    top: `${Math.random() * 80 + 5}vh`
+    shadow: '2px 2px 4px rgba(173,255,47,0.3)'
 }, {
     dur: 17,
     color: 'gold',
     size: 'clamp(10px, 2.5vw, 18px)',
-    top: `${Math.random() * 80 + 5}vh`
+    shadow: '1px 1px 2px rgba(255,215,0,0.4)'
 }, {
     dur: 20,
     color: 'orange',
     size: 'clamp(20px, 5vw, 50px)',
-    top: `${Math.random() * 80 + 5}vh`
+    shadow: '3px 3px 6px rgba(255,165,0,0.3)'
 }, {
     dur: 16,
     color: 'pink',
     size: 'clamp(25px, 6vw, 60px)',
-    top: `${Math.random() * 80 + 5}vh`
+    shadow: '2px 2px 5px rgba(255,192,203,0.4)'
 }, {
     dur: 25,
     color: 'cyan',
     size: "clamp(14px, 3.5vw, 29px)",
-    top: `${Math.random() * 80 + 5}vh`
+    shadow: '2px 2px 4px rgba(0,255,255,0.3)'
+}, {
+    dur: 19,
+    color: 'lightgreen',
+    size: "clamp(16px, 4vw, 32px)",
+    shadow: '2px 2px 4px rgba(144,238,144,0.3)'
+}, {
+    dur: 21,
+    color: 'violet',
+    size: "clamp(13px, 3.2vw, 26px)",
+    shadow: '2px 2px 4px rgba(238,130,238,0.3)'
 }]
 
 const audioList = [meguru]
@@ -57,13 +67,48 @@ const App = () => {
     const activeAnimationsRef = useRef(0);
     const audioObjectsRef = useRef([]);
     const audioInitializedRef = useRef(false);
-    const maxAnimations = window.innerWidth <= 768 ? 3 : 8; // Limit animations on mobile
+    const occupiedPositionsRef = useRef(new Set());
+    const maxAnimations = window.innerWidth <= 768 ? 3 : 8;
+
+    // Position management for bullet screens
+    const getAvailablePosition = () => {
+        const viewportHeight = window.innerHeight;
+        const centerTop = viewportHeight * 0.3;
+        const centerBottom = viewportHeight * 0.7;
+        const minSpacing = window.innerWidth <= 768 ? 60 : 80;
+        
+        // Create available zones (avoid center area)
+        const topZone = { start: viewportHeight * 0.05, end: centerTop };
+        const bottomZone = { start: centerBottom, end: viewportHeight * 0.95 };
+        
+        const zones = [topZone, bottomZone];
+        
+        for (const zone of zones) {
+            for (let y = zone.start; y <= zone.end; y += minSpacing) {
+                const positionKey = Math.floor(y / minSpacing) * minSpacing;
+                if (!occupiedPositionsRef.current.has(positionKey)) {
+                    occupiedPositionsRef.current.add(positionKey);
+                    // Auto-clear position after animation
+                    setTimeout(() => {
+                        occupiedPositionsRef.current.delete(positionKey);
+                    }, 3000);
+                    return y;
+                }
+            }
+        }
+        
+        // Fallback: random position in safe zones
+        const zone = zones[Math.floor(Math.random() * zones.length)];
+        return Math.random() * (zone.end - zone.start) + zone.start;
+    };
 
     const randomColor = () => {
-        const r = Math.floor(Math.random() * 256)
-        const g = Math.floor(Math.random() * 256)
-        const b = Math.floor(Math.random() * 256)
-        return `rgb(${r},${g},${b})`
+        const colors = [
+            'rgb(255, 105, 180)', 'rgb(135, 206, 250)', 'rgb(255, 165, 0)',
+            'rgb(144, 238, 144)', 'rgb(221, 160, 221)', 'rgb(255, 182, 193)',
+            'rgb(173, 216, 230)', 'rgb(240, 230, 140)', 'rgb(255, 218, 185)'
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
     }
 
     // 预加载和初始化音频对象
@@ -86,7 +131,6 @@ const App = () => {
     };
 
     const cialloAppend = (event) => {
-        // Limit concurrent animations to prevent lag
         if (activeAnimationsRef.current >= maxAnimations) {
             return;
         }
@@ -101,6 +145,7 @@ const App = () => {
         
         const isMobile = window.innerWidth <= 768;
         const fontSize = isMobile ? Math.random() * 10 + 12 : Math.random() * 20 + 15;
+        const randomRotation = (Math.random() - 0.5) * 20; // -10 to 10 degrees
         
         span.style.cssText = `
             position: fixed; 
@@ -109,11 +154,12 @@ const App = () => {
             color: ${randomColor()}; 
             font-weight: bold;
             font-size: ${fontSize}px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.4), 0 0 10px currentColor;
             z-index: 1000;
             pointer-events: none;
             user-select: none;
             will-change: transform, opacity;
+            filter: drop-shadow(0 0 5px rgba(255,255,255,0.3));
         `;
         document.body.appendChild(span);
         
@@ -121,22 +167,26 @@ const App = () => {
         
         const animationDuration = isMobile ? 1500 : 2000;
         const moveDistance = isMobile ? 100 : 180;
+        const bounceHeight = isMobile ? 30 : 50;
         
         const animation = span.animate([
             { 
-                transform: 'scale(0) rotate(0deg)', 
+                transform: `scale(0) rotate(${randomRotation}deg)`, 
                 opacity: 1,
-                top: `${y - 20}px`
+                top: `${y - 20}px`,
+                filter: 'drop-shadow(0 0 5px rgba(255,255,255,0.3)) brightness(1.2)'
             },
             { 
-                transform: 'scale(1.1) rotate(5deg)', 
+                transform: `scale(1.2) rotate(${randomRotation + 5}deg)`, 
                 opacity: 1,
-                top: `${y - 40}px`
+                top: `${y - bounceHeight}px`,
+                filter: 'drop-shadow(0 0 8px rgba(255,255,255,0.4)) brightness(1.1)'
             },
             { 
-                transform: 'scale(1) rotate(-3deg)', 
+                transform: `scale(1) rotate(${randomRotation - 3}deg)`, 
                 opacity: 0,
-                top: `${y - moveDistance}px`
+                top: `${y - moveDistance}px`,
+                filter: 'drop-shadow(0 0 3px rgba(255,255,255,0.2)) brightness(1)'
             }
         ], {
             duration: animationDuration,
@@ -207,7 +257,14 @@ const App = () => {
             
             <Jumper />
             <div>
-                {colorMap.map((item, index) => <Ciallo key={index} {...item} />)}
+                {colorMap.map((item, index) => (
+                    <Ciallo 
+                        key={index} 
+                        {...item} 
+                        top={getAvailablePosition()}
+                        delay={Math.random() * 5}
+                    />
+                ))}
             </div>
             <footer style={{
                 position: 'fixed',
