@@ -1,84 +1,51 @@
 import { createRoot } from 'react-dom/client';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import Ciallo from './components/Ciallo';
 import Jumper from './components/Jumper';
 // TODO:晚点改成cdn形式
 import meguru from './assets/meguru.aac'
 
+// Reduce colorMap items for mobile performance
 const colorMap = [{
     dur: 12,
     color: 'red',
-    size: "35px"
+    size: "clamp(15px, 4vw, 35px)"
 }, {
     dur: 15,
     color: 'aqua',
-    size: "40px"
+    size: "clamp(18px, 4.5vw, 40px)"
 }, {
     dur: 11,
     color: 'coral',
-    size: "25px"
-}, {
-    dur: 7,
-    color: 'black',
-    size: "19px"
+    size: "clamp(12px, 3vw, 25px)"
 }, {
     dur: 10,
     color: 'greenyellow',
-    size: "29px"
+    size: "clamp(14px, 3.5vw, 29px)"
 }, {
     dur: 12,
     color: 'gold',
-    size: '18px'
+    size: 'clamp(10px, 2.5vw, 18px)'
 }, {
     dur: 15,
     color: 'orange',
-    size: '50px'
+    size: 'clamp(20px, 5vw, 50px)'
 }, {
     dur: 11,
     color: 'pink',
-    size: '80px'
-}, {
-    dur: 12,
-    color: 'silver',
-    size: "45px"
+    size: 'clamp(25px, 6vw, 60px)'
 }, {
     dur: 18,
     color: 'cyan',
-    size: "29px"
-}, {
-    dur: 11,
-    color: 'greenyellow',
-    size: "23px"
-}, {
-    dur: 14,
-    color: 'grey',
-    size: "19px"
-}, {
-    dur: 6,
-    color: 'violet',
-    size: "45px"
-}, {
-    dur: 15,
-    color: 'blue',
-    size: '26px'
-}, {
-    dur: 14,
-    color: 'green',
-    size: '50px'
-}, {
-    dur: 12,
-    color: 'aqua',
-    size: '75px'
-}, {
-    dur: 11,
-    color: 'black',
-    size: "25px"
+    size: "clamp(14px, 3.5vw, 29px)"
 }]
 
 const audioList = [meguru]
 
 const App = () => {
-    let audioIndex = 0;
+    const audioIndexRef = useRef(0);
+    const activeAnimationsRef = useRef(0);
+    const maxAnimations = window.innerWidth <= 768 ? 3 : 8; // Limit animations on mobile
 
     const randomColor = () => {
         const r = Math.floor(Math.random() * 256)
@@ -88,25 +55,42 @@ const App = () => {
     }
 
     const cialloAppend = (event) => {
-        const x = event.pageX;
-        const y = event.pageY;
+        // Limit concurrent animations to prevent lag
+        if (activeAnimationsRef.current >= maxAnimations) {
+            return;
+        }
+
+        const x = event.pageX || (event.touches && event.touches[0].pageX);
+        const y = event.pageY || (event.touches && event.touches[0].pageY);
+        
+        if (!x || !y) return;
+
         const span = document.createElement('span')
         span.innerHTML = 'Ciallo～(∠・ω< )⌒★';
-        // 添加更丰富的样式和动画效果
+        
+        const isMobile = window.innerWidth <= 768;
+        const fontSize = isMobile ? Math.random() * 10 + 12 : Math.random() * 20 + 15;
+        
         span.style.cssText = `
-            position: absolute; 
+            position: fixed; 
             left: ${x}px; 
             top: ${y - 20}px; 
             color: ${randomColor()}; 
             font-weight: bold;
-            font-size: ${Math.random() * 20 + 15}px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: ${fontSize}px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
             z-index: 1000;
             pointer-events: none;
             user-select: none;
+            will-change: transform, opacity;
         `;
         document.body.appendChild(span);
-        // 添加更复杂的动画效果
+        
+        activeAnimationsRef.current++;
+        
+        const animationDuration = isMobile ? 1500 : 2000;
+        const moveDistance = isMobile ? 100 : 180;
+        
         const animation = span.animate([
             { 
                 transform: 'scale(0) rotate(0deg)', 
@@ -114,33 +98,50 @@ const App = () => {
                 top: `${y - 20}px`
             },
             { 
-                transform: 'scale(1.2) rotate(10deg)', 
+                transform: 'scale(1.1) rotate(5deg)', 
                 opacity: 1,
-                top: `${y - 60}px`
+                top: `${y - 40}px`
             },
             { 
-                transform: 'scale(1) rotate(-5deg)', 
+                transform: 'scale(1) rotate(-3deg)', 
                 opacity: 0,
-                top: `${y - 180}px`
+                top: `${y - moveDistance}px`
             }
         ], {
-            duration: 2000,
+            duration: animationDuration,
             easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         });
-        new Audio(audioList[audioIndex]).play();
-        audioIndex = (audioIndex + 1) % audioList.length;
+        
+        // Play audio with throttling on mobile
+        if (!isMobile || Math.random() > 0.5) {
+            try {
+                new Audio(audioList[audioIndexRef.current]).play();
+                audioIndexRef.current = (audioIndexRef.current + 1) % audioList.length;
+            } catch (e) {
+                // Ignore audio errors on mobile
+            }
+        }
+        
         animation.onfinish = () => {
+            activeAnimationsRef.current--;
             span.remove();
         }
     }
 
     useEffect(() => {
-        document.body.addEventListener('click', cialloAppend)
+        const handleTouch = (e) => {
+            e.preventDefault(); // Prevent scrolling on touch
+            cialloAppend(e);
+        };
+
+        document.body.addEventListener('click', cialloAppend);
+        document.body.addEventListener('touchstart', handleTouch, { passive: false });
 
         return () => {
-            document.body.removeEventListener('click', cialloAppend)
+            document.body.removeEventListener('click', cialloAppend);
+            document.body.removeEventListener('touchstart', handleTouch);
         }
-    })
+    }, []);
 
     return (
         <div style={{
@@ -150,7 +151,8 @@ const App = () => {
             position: 'fixed',
             top: 0,
             left: 0,
-            overflow: 'hidden'
+            overflow: 'hidden',
+            touchAction: 'manipulation'
         }}>
             <Jumper />
             <div>
@@ -160,7 +162,7 @@ const App = () => {
                 position: 'fixed',
                 bottom: '10px',
                 right: '15px',
-                fontSize: '12px',
+                fontSize: 'clamp(10px, 2.5vw, 12px)',
                 color: 'rgba(255, 255, 255, 0.6)',
                 backgroundColor: 'rgba(0, 0, 0, 0.1)',
                 padding: '5px 10px',

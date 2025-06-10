@@ -13,18 +13,28 @@
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+  overflow: hidden;
 }
 .box span {
   z-index: 1;
   position: relative;
   top: 20px;
-  font-size: 5rem;
+  font-size: clamp(2rem, 8vw, 5rem);
   display: inline-block;
   animation: bounce 0.3s ease infinite alternate;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+  will-change: transform;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .box span {
+    font-size: clamp(1.5rem, 6vw, 3rem);
+    animation-duration: 0.4s;
+  }
 }
 
 @keyframes bounce {
@@ -33,7 +43,14 @@
     text-shadow: rgba(255, 255, 255, 0.4) 0 0 0.05em;
   }
   100% {
-    transform: translate3d(0, -0.5em, 0);
-    text-shadow: rgba(255, 255, 255, 0.4) 0 1em 0.35em;
+    transform: translate3d(0, -0.3em, 0);
+    text-shadow: rgba(255, 255, 255, 0.4) 0 0.5em 0.2em;
+  }
+}
+
+/* Reduce animations on low-end devices */
+@media (prefers-reduced-motion: reduce) {
+  .box span {
+    animation: none;
   }
 }
