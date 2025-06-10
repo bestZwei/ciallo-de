@@ -45,6 +45,8 @@ const audioList = [meguru]
 const App = () => {
     const audioIndexRef = useRef(0);
     const activeAnimationsRef = useRef(0);
+    const audioObjectsRef = useRef([]);
+    const audioInitializedRef = useRef(false);
     const maxAnimations = window.innerWidth <= 768 ? 3 : 8; // Limit animations on mobile
 
     const randomColor = () => {
@@ -53,6 +55,36 @@ const App = () => {
         const b = Math.floor(Math.random() * 256)
         return `rgb(${r},${g},${b})`
     }
+
+    // 预加载和初始化音频对象
+    useEffect(() => {
+        const initAudio = () => {
+            audioList.forEach((audioSrc, index) => {
+                const audio = new Audio(audioSrc);
+                audio.preload = 'auto';
+                audio.volume = 0.7;
+                audioObjectsRef.current[index] = audio;
+            });
+            audioInitializedRef.current = true;
+        };
+
+        // 在用户首次交互时初始化音频
+        const handleFirstInteraction = () => {
+            if (!audioInitializedRef.current) {
+                initAudio();
+                document.removeEventListener('click', handleFirstInteraction);
+                document.removeEventListener('touchstart', handleFirstInteraction);
+            }
+        };
+
+        document.addEventListener('click', handleFirstInteraction);
+        document.addEventListener('touchstart', handleFirstInteraction);
+
+        return () => {
+            document.removeEventListener('click', handleFirstInteraction);
+            document.removeEventListener('touchstart', handleFirstInteraction);
+        };
+    }, []);
 
     const cialloAppend = (event) => {
         // Limit concurrent animations to prevent lag
@@ -112,13 +144,22 @@ const App = () => {
             easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
         });
         
-        // Play audio with throttling on mobile
-        if (!isMobile || Math.random() > 0.5) {
-            try {
-                new Audio(audioList[audioIndexRef.current]).play();
-                audioIndexRef.current = (audioIndexRef.current + 1) % audioList.length;
-            } catch (e) {
-                // Ignore audio errors on mobile
+        // 使用预加载的音频对象播放音频
+        if (audioInitializedRef.current && audioObjectsRef.current.length > 0) {
+            const audio = audioObjectsRef.current[audioIndexRef.current];
+            if (audio) {
+                // 重置音频到开始位置以确保能够重复播放
+                audio.currentTime = 0;
+                const playPromise = audio.play();
+                
+                // 处理播放失败的情况
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log('Audio play failed:', error);
+                    });
+                }
+                
+                audioIndexRef.current = (audioIndexRef.current + 1) % audioObjectsRef.current.length;
             }
         }
         
