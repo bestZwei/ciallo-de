@@ -156,6 +156,40 @@ const App = () => {
             <div>
                 {colorMap.map((item, index) => <Ciallo key={index} {...item} />)}
             </div>
+            <footer style={{
+                position: 'fixed',
+                bottom: '10px',
+                right: '15px',
+                fontSize: '12px',
+                color: 'rgba(255, 255, 255, 0.6)',
+                backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                padding: '5px 10px',
+                borderRadius: '15px',
+                backdropFilter: 'blur(5px)',
+                zIndex: 1000,
+                textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3)'
+            }}>
+                <a 
+                    href="https://github.com/bestZwei/ciallo-de" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    style={{
+                        color: 'inherit',
+                        textDecoration: 'none',
+                        transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                        e.target.style.color = 'rgba(255, 255, 255, 0.9)';
+                        e.target.style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.5)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.target.style.color = 'rgba(255, 255, 255, 0.6)';
+                        e.target.style.textShadow = '1px 1px 2px rgba(0, 0, 0, 0.3)';
+                    }}
+                >
+                    GitHub
+                </a>
+            </footer>
         </div>
     );
 }
