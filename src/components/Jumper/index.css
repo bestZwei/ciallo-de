@@ -22,6 +22,7 @@
     transparent 50%
   );
   z-index: 2000; /* Ensure it's above everything else */
+  pointer-events: none; /* Allow clicks to pass through the container */
 }
 .box span {
   z-index: 2001; /* Higher than the container and all other elements */
@@ -40,6 +41,7 @@
     2px 2px 4px rgba(0, 0, 0, 0.3),
     0 0 20px rgba(255, 255, 255, 0.5),
     0 0 40px rgba(255, 255, 255, 0.3);
+  pointer-events: none; /* Text itself doesn't need to be clickable */
 }
 
 /* Mobile optimizations */
