@@ -5,3 +5,8 @@ dist-ssr
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
+
+# Lockfile is OS-specific here: it is generated on Windows but deployed on
+# Linux (Vercel), and a cross-platform lock breaks optional native deps
+# (npm/cli#4828). Vercel resolves dependencies fresh on Linux instead.
+package-lock.json
