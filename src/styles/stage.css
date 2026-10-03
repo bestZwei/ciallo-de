@@ -1,0 +1,28 @@
+.stage {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  /* Two layers: a cool diagonal base plus one warm bloom at the top-center.
+     The bloom is what raises local luminance to --bg-hot, which is the point
+     every palette swatch is measured against. */
+  background:
+    radial-gradient(
+      ellipse 62% 46% at 50% 46%,
+      rgba(255, 111, 165, 0.2),
+      transparent 72%
+    ),
+    linear-gradient(160deg, var(--bg-0) 0%, var(--bg-1) 55%, var(--bg-2) 100%);
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+}
+
+.stage-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: var(--z-character);
+  display: grid;
+  justify-items: center;
+  gap: var(--gap);
+}
+

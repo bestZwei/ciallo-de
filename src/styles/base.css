@@ -1,0 +1,61 @@
+* {
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-0);
+  color: var(--ink);
+  font-family: var(--font-stack);
+  overscroll-behavior: none;
+}
+
+body {
+  /* Pinch-zoom stays available (a11y); double-tap zoom is what we suppress.
+     Replaces the old touchstart + preventDefault() pairing that could fire twice. */
+  touch-action: manipulation;
+}
+
+#root {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  height: 100dvh;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Decorative motion is off, but expression changes are state, not animation,
+   so they survive: mood classes still apply, only displacement stops. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 120ms !important;
+  }
+}

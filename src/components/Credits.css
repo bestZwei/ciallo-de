@@ -1,0 +1,33 @@
+.credits {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) + var(--gap));
+  transform: translateX(-50%);
+  /* fit-content keeps the no-spawn band as narrow as the text itself, so most of
+     the bottom of the screen still answers a tap. */
+  width: fit-content;
+  max-width: min(92vw, 40rem);
+  z-index: var(--z-hud);
+  margin: 0;
+  padding: calc(4px * var(--scale)) calc(8px * var(--scale));
+  text-align: center;
+  line-height: 1.45;
+  font-size: var(--marquee-font-min);
+  color: var(--ink-dim);
+}
+
+.credits-line {
+  margin: 0;
+}
+
+.credits-sub {
+  margin: 0;
+  font-size: calc(var(--marquee-font-min) * 0.88);
+}
+
+.credits a {
+  color: var(--ink-dim);
+  text-decoration: underline;
+  /* Underline, not colour alone, so the link survives a colour-blind read. */
+  text-underline-offset: 2px;
+}

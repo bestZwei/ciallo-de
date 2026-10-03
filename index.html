@@ -1,18 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hans">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="description" content="Ciallo～(∠・ω< )⌒★ — click (or tap) anywhere for a delightful surprise!" />
+    <meta name="theme-color" content="#0d0a1f" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="Ciallo～(∠・ω< )⌒★ — 一个会呼吸、会眨眼、眼神跟着你的二次元小角色。点它，点屏幕任何地方。"
+    />
     <meta property="og:title" content="Ciallo～(∠・ω< )⌒★" />
-    <meta property="og:description" content="Click anywhere and watch the magic happen." />
+    <meta property="og:description" content="点哪里都有回应的小角色。" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://ciallo.de" />
     <meta name="google-adsense-account" content="ca-pub-4126706516463067" />
     <title>Ciallo～(∠・ω< )⌒★</title>
+    <!-- Painted before React mounts so the first frame is already the dark stage. -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #0d0a1f;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

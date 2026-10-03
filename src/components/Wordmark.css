@@ -1,0 +1,24 @@
+.wordmark {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--safe-top) + var(--gap));
+  transform: translateX(-50%);
+  margin: 0;
+  z-index: var(--z-hud);
+  font-size: calc(var(--label-font) * 0.8);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--ink-dim);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.wordmark-main {
+  /* The wordmark is furniture, so it is deliberately not the brightest thing here. */
+  color: var(--ink);
+}
+
+.wordmark-tld {
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}

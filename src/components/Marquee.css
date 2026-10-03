@@ -1,0 +1,56 @@
+.marquee {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* Behind the character on purpose: atmosphere, not content. */
+  z-index: var(--z-marquee);
+  pointer-events: none;
+  /* The wordmark, HUD column and credits are text too, and they grow with --scale
+     while a percentage band does not — so the keep-out is in scaled pixels. */
+  --keep-top: calc(170px * var(--scale));
+  --keep-bottom: calc(76px * var(--scale));
+}
+
+.lane {
+  position: absolute;
+  left: 100%;
+  top: calc(
+    var(--keep-top) + var(--lane) * (100% - var(--keep-top) - var(--keep-bottom)) / 8.6
+  );
+  white-space: nowrap;
+  font-size: calc(var(--label-font) * var(--k));
+  opacity: 0.8;
+  /* A dark plate, never a currentColor glow. The previous site used
+     `text-shadow: 0 0 10px currentColor`, which lines the glyph up with a copy of
+     itself and is how contrast ended up at 1.00. */
+  text-shadow:
+    0 0 10px var(--bg-0),
+    0 0 3px var(--label-halo);
+  animation-name: drift;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+/* Travel is own width + one viewport, because the lane starts fully off the right
+   edge. The old rule translated only 100% of a 100vw-wide element, so each pass spent
+   about half its cycle with nothing on screen. */
+@keyframes drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(calc(-100% - 100vw), 0, 0);
+  }
+}
+
+/* base.css zeroes animation durations globally, which would leave every lane parked at
+   its un-animated left:100% and the backdrop blank. Static, staggered lanes instead. */
+@media (prefers-reduced-motion: reduce) {
+  .lane {
+    animation: none;
+    left: 2%;
+    transform: none;
+    will-change: auto;
+  }
+}

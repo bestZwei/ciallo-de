@@ -1,0 +1,51 @@
+/* Design tokens. Everything visual reads from here; nothing is hardcoded downstream. */
+
+:root {
+  color-scheme: dark;
+
+  /* Stage background. --bg-hot is the brightest point of the gradient and is the
+     reference used by palette.ts for worst-case contrast claims. */
+  --bg-0: #0d0a1f;
+  --bg-1: #1c1030;
+  --bg-2: #2b1440;
+  --bg-hot: #482057;
+
+  --ink: #f6f2ff;
+  --ink-dim: rgba(246, 242, 255, 0.62);
+  --hairline: rgba(246, 242, 255, 0.14);
+
+  /* Keyboard focus cue: must clear 3:1 against --bg-hot and not rely on color
+     alone, which is why it is paired with an outline-offset gap. */
+  --focus-ring: #5ad1ff;
+
+  /* Label halo: the dark plate under every spawned text. Contrast is guaranteed
+     by this, not by luck, so it must never be dropped from the draw path. */
+  --label-halo: rgba(13, 10, 31, 0.85);
+
+  /* Continuous viewport scale, written by lib/viewport.ts every resize. */
+  --scale: 1;
+
+  /* Layout sizes, all derived from --scale so nothing snaps at breakpoints. */
+  --character-size: calc(340px * var(--scale));
+  --label-font: calc(19px * var(--scale));
+  --marquee-font-min: calc(13px * var(--scale));
+  --gap: calc(14px * var(--scale));
+
+  --font-stack: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui,
+    -apple-system, 'Segoe UI', sans-serif;
+
+  /* Paint order. Particles sit above the character so a click on the face is
+     still visible; the gate sits above everything. */
+  --z-marquee: 100;
+  --z-character: 300;
+  --z-particles: 400;
+  --z-hud: 900;
+  --z-gate: 1000;
+
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}

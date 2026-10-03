@@ -1,0 +1,8 @@
+.fx {
+  position: absolute;
+  inset: 0;
+  /* Feedback sits above the character so a click on the face stays visible, but it
+     must never intercept the pointer that produced it. */
+  pointer-events: none;
+  z-index: var(--z-particles);
+}

@@ -1,0 +1,51 @@
+.gate {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: calc(var(--gap) * 1.6);
+  padding: calc(var(--safe-top) + 24px) var(--safe-right) calc(var(--safe-bottom) + 24px)
+    var(--safe-left);
+  text-align: center;
+  background: rgba(13, 10, 31, 0.86);
+  z-index: var(--z-gate);
+}
+
+.gate-title {
+  margin: 0;
+  font-size: calc(var(--label-font) * 1.6);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.gate-note {
+  margin: 0;
+  font-size: calc(var(--label-font) * 0.85);
+  line-height: 1.7;
+  color: var(--ink-dim);
+}
+
+.gate-legal {
+  margin: 0;
+  font-size: var(--marquee-font-min);
+  color: var(--ink-dim);
+}
+
+.gate-enter {
+  min-height: 44px;
+  padding: calc(10px * var(--scale)) calc(28px * var(--scale));
+  font: inherit;
+  font-size: calc(var(--label-font) * 0.95);
+  color: var(--bg-0);
+  background: var(--ink);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 160ms var(--ease-spring);
+}
+
+.gate-enter:hover {
+  transform: translateY(-2px);
+}
