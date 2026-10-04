@@ -27,6 +27,7 @@ export type Dict = {
   gateNote: [string, string];
   gateEnter: string;
   gateLegal: string;
+  repo: string;
   crashed: string;
   reload: string;
   switchTo: string;
@@ -48,6 +49,7 @@ export const STRINGS: Record<Locale, Dict> = {
     ],
     gateEnter: 'Enter',
     gateLegal: 'Character artwork is copyright Live2D Inc. — see the credit in the footer.',
+    repo: 'Source on GitHub',
     crashed: 'Ciallo fell over (∠・ω< )⌒★',
     reload: 'Reload',
     switchTo: '中文',
@@ -64,6 +66,7 @@ export const STRINGS: Record<Locale, Dict> = {
     gateNote: ['点屏幕的任何地方，她都会回应你。', '点她本人，效果更明显。'],
     gateEnter: '进入',
     gateLegal: '角色素材版权归 Live2D Inc. 所有，详见页脚署名。',
+    repo: '源码在 GitHub',
     crashed: 'Ciallo 摔倒了 (∠・ω< )⌒★',
     reload: '刷新',
     switchTo: 'English',

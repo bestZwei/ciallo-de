@@ -31,3 +31,7 @@
   /* Underline, not colour alone, so the link survives a colour-blind read. */
   text-underline-offset: 2px;
 }
+
+.credits a:hover {
+  color: var(--ink);
+}

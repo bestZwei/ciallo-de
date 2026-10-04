@@ -1,3 +1,4 @@
+import { t } from '../i18n';
 import './Credits.css';
 
 /**
@@ -14,6 +15,11 @@ const Credits = () => (
       </a>
     </p>
     <p className="credits-sub">Niziiro Mao — Illustration &amp; Modeling: Live2D Inc.</p>
+    <p className="credits-sub">
+      <a href="https://github.com/bestZwei/ciallo-de" rel="noopener" target="_blank">
+        {t().repo}
+      </a>
+    </p>
   </footer>
 );
 
