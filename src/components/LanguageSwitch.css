@@ -1,0 +1,21 @@
+.lang-switch {
+  /* .hud takes pointer events away from the whole band; controls opt back in. */
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: calc(6px * var(--scale)) calc(12px * var(--scale));
+  font: inherit;
+  text-decoration: none;
+  color: var(--ink-dim);
+  background: rgba(13, 10, 31, 0.55);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+}
+
+.lang-switch:hover {
+  color: var(--ink);
+  border-color: var(--ink-dim);
+}

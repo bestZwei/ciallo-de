@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { t } from '../i18n';
 
 interface Props {
   children: ReactNode;
@@ -21,9 +22,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (!this.state.failed) return this.props.children;
+    const strings = t();
     return (
       <div style={{ padding: 24, color: '#f6f2ff', lineHeight: 1.7 }}>
-        <p>Ciallo 摔倒了 (∠・ω&lt; )⌒★</p>
+        <p>{strings.crashed}</p>
         <button
           onClick={() => location.reload()}
           style={{
@@ -36,7 +38,7 @@ export class ErrorBoundary extends Component<Props, State> {
             cursor: 'pointer',
           }}
         >
-          刷新
+          {strings.reload}
         </button>
       </div>
     );

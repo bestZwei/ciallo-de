@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { clamp } from '../lib/anim';
+import { t } from '../i18n';
 import { publishProbe } from '../lib/devflag';
 import { resolveTier } from '../fx/world';
 import { watchViewport } from '../lib/viewport';
@@ -236,7 +237,7 @@ const Live2DStage = () => {
         ref={figureRef}
         role="img"
         tabIndex={0}
-        aria-label="Ciallo～ 的角色立绘，可点击"
+        aria-label={t().figureAria}
       />
       {status === 'loading' && <span className="l2d-hint" aria-hidden="true">Ciallo～</span>}
       {status === 'failed' && (
@@ -246,7 +247,7 @@ const Live2DStage = () => {
           data-no-spawn
           onClick={() => setAttempt((n) => n + 1)}
         >
-          角色载入失败，点击重试
+          {t().loadFailed}
         </button>
       )}
     </div>

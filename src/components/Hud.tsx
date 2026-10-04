@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { hasWebAudio, isMuted, toggleMuted } from '../audio/engine';
+import { t } from '../i18n';
 import { moods, onMoodChange, onTap } from '../character/controller';
 import { isThreshold } from '../character/mood';
 import { keys, readJSON, writeJSON } from '../lib/storage';
+import LanguageSwitch from './LanguageSwitch';
 import './Hud.css';
 
 /**
@@ -11,6 +13,7 @@ import './Hud.css';
  * lost clicks. React still owns the structure; only the numbers move.
  */
 const Hud = () => {
+  const strings = t();
   const comboRef = useRef<HTMLSpanElement>(null);
   const bestRef = useRef<HTMLSpanElement>(null);
   const liveRef = useRef<HTMLParagraphElement>(null);
@@ -33,7 +36,7 @@ const Hud = () => {
       }
       /* Announce thresholds only. A live region that updates on every click turns the
          whole screen into a stream of numbers for a screen-reader user. */
-      if (isThreshold(t.combo)) liveEl.textContent = `${t.combo} 连击`;
+      if (isThreshold(t.combo)) liveEl.textContent = strings.comboAnnounce(t.combo);
     });
 
     const offMood = onMoodChange(() => {
@@ -55,10 +58,10 @@ const Hud = () => {
         <span className="hud-num" ref={comboRef}>
           0
         </span>
-        <span className="hud-cap">连击</span>
+        <span className="hud-cap">{strings.combo}</span>
       </p>
       <p className="hud-best">
-        最高 <span ref={bestRef}>0</span>
+        {strings.best} <span ref={bestRef}>0</span>
       </p>
       {hasWebAudio() && (
         <button
@@ -67,9 +70,10 @@ const Hud = () => {
           aria-pressed={muted}
           onClick={() => setMuted(toggleMuted())}
         >
-          {muted ? '音效关闭' : '音效开启'}
+          {muted ? strings.soundOff : strings.soundOn}
         </button>
       )}
+      <LanguageSwitch />
       <p className="sr-only" aria-live="polite" ref={liveRef} />
     </div>
   );

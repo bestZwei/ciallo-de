@@ -2,6 +2,7 @@ import { median, percentile } from '../lib/anim';
 import type { Tier } from '../fx/world';
 import { BG_HOT, MIN_CONTRAST, SWATCHES, contrastRatio } from '../palette';
 import { viewport } from '../lib/viewport';
+import { LOCALE, LOCALE_PATH, LOCALE_TAG, OTHER_LOCALE, STRINGS } from '../i18n';
 
 /**
  * Page-internal verification probe, enabled with `?selfcheck`. It asserts the numbers
@@ -480,8 +481,32 @@ const t13 = async (): Promise<Result> => {
   };
 };
 
-const render = (results: Result[]) => {
-  const id = 'self-check-panel';
+/** T14 — the locales are two URLs, so <html lang>, the path and the switch link have to
+    agree. A page that says one thing and renders another is precisely what crawlers
+    punish, and nothing else here can see the mismatch. */
+const t14 = (): Result => {
+  const htmlLang = document.documentElement.lang;
+  const wantLang = LOCALE_TAG[LOCALE];
+  const enKeys = Object.keys(STRINGS.en).sort();
+  const zhKeys = Object.keys(STRINGS.zh).sort();
+  const aligned = enKeys.length === zhKeys.length && enKeys.every((k, i) => zhKeys[i] === k);
+  const empty = (['en', 'zh'] as const).flatMap((l) =>
+    Object.entries(STRINGS[l])
+      .filter(([, v]) => typeof v === 'string' && !(v as string).trim())
+      .map(([k]) => `${l}.${k}`)
+  );
+  const href = document.querySelector('.lang-switch')?.getAttribute('href') ?? null;
+  const wantHref = LOCALE_PATH[OTHER_LOCALE[LOCALE]];
+  return {
+    id: 'T14 locale',
+    pass: htmlLang === wantLang && aligned && empty.length === 0 && href === wantHref,
+    detail: `<html lang>="${htmlLang}" want "${wantLang}" for ${location.pathname}; dict ${enKeys.length}/${zhKeys.length} keys${
+      empty.length ? `, empty: ${empty.join(',')}` : ''
+    }; switch → ${href ?? 'missing'}${href === wantHref ? '' : ` want ${wantHref}`}`,
+  };
+};
+
+const render = (results: Result[]) => {  const id = 'self-check-panel';
   let panel = document.getElementById(id);
   if (!panel) {
     panel = document.createElement('div');
@@ -545,5 +570,6 @@ export const runSelfCheck = async () => {
     audible,
     t12(),
     eyes,
+    t14(),
   ]);
 };

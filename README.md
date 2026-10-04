@@ -16,6 +16,10 @@ npm run preview   # 预览构建产物
 
 `pixi.js` 必须锁在 6.x：`pixi-live2d-display@0.4.0` 的 peerDependency 是 `@pixi/*: ^6`，升到 7 会让 `instanceof` 与 renderer 直接失配。
 
+两个语言入口本地都在：`http://localhost:5173/`（英文）与 `http://localhost:5173/zh/`（中文），
+`?selfcheck` 对两者都可用。注意 `npm run preview` 是 SPA 兜底，`/zh`（少斜杠）和任意错路径都会
+返回 200 英文页；`trailingSlash` 归一与真 404 是 Vercel 侧行为，本地看不出差异。
+
 ## 架构
 
 画面分三层，层级由 `src/styles/tokens.css` 里的 `--z-*` 决定：
@@ -68,17 +72,18 @@ Oscillator blip ───┼→ 各自 gain → masterGain(0.22) → DynamicsCom
 
 ## 自检
 
-打开 `?selfcheck` 会在左下角跑一页内断言（`src/dev/selfCheck.ts`），数值同时 `console.table`。断言项十三：对比度、点击偏移必须为 0、同毫秒 200 连点全部被接受、池满时 `recycled` 递增但最新标签仍存活、帧成本、弹幕 8 档 8 色且背景不空窗、语音闸门、连续缩放区间、reduced-motion、StrictMode 下「一次点击 = 一个标签 + 一个 blip」、点击真的推出了声波、弹幕不穿过 wordmark/HUD/署名、以及静息帧里她的眼睑确实是睁开的。探测第一步是先点「进入」把首访弹窗关掉再量——弹窗是带 `data-no-spawn` 的模态层，对着它跑只会量到一排「按设计拒绝」，而 `ciallo.seen` 按 origin 存，换一个 dev 端口就是一次首访。除 T5、T11、T13 外其余十项在同一趟同步流程里跑完，所以它们的读数与窗口是否在绘制无关。
+打开 `?selfcheck` 会在左下角跑一页内断言（`src/dev/selfCheck.ts`），数值同时 `console.table`。断言项十四：对比度、点击偏移必须为 0、同毫秒 200 连点全部被接受、池满时 `recycled` 递增但最新标签仍存活、帧成本、弹幕 8 档 8 色且背景不空窗、语音闸门、连续缩放区间、reduced-motion、StrictMode 下「一次点击 = 一个标签 + 一个 blip」、点击真的推出了声波、弹幕不穿过 wordmark/HUD/署名、静息帧里她的眼睑确实是睁开的、以及 `<html lang>` 与路径派生的语言一致且中英两份字典 key 对齐。探测第一步是先点「进入」把首访弹窗关掉再量——弹窗是带 `data-no-spawn` 的模态层，对着它跑只会量到一排「按设计拒绝」，而 `ciallo.seen` 按 origin 存，换一个 dev 端口就是一次首访。除 T5、T11、T13 外其余十一项在同一趟同步流程里跑完，所以它们的读数与窗口是否在绘制无关。
 
 刻意偏离原方案的这几处，都是为了量到真东西：
 
 - **T5 断言的是应用自己的帧，不是紧循环里的假帧**。纯池运算（`fx.update` 单独计时）p95 ≤ 1ms 是硬断言，实测 0.2–0.8ms，任何环境都稳定。真正对预算的那个数来自 rAF 循环：`ParticleLayer` 在 `?selfcheck` 下记录每帧 `update+draw` 的实际耗时，T5 清空缓冲、以 ≈6 次/秒（一个人维持得住的连点）点 1.3 秒，再取这段真实帧的中位数对上 `3.0 / 4.5 / 7.0ms` 的档位预算。紧循环那趟（每步一次点击，≈12 倍人手速度）只报中位数、不断言，因为它从不把主线程交还合成器，尾巴量的是被强制的 GPU flush 而不是卡顿。窗口不绘制时根本没有 rAF，T5 就明说「几帧都没画、这里量不了」，而不是拿一个虚高的数冒充结论，也不是悄悄跳过。
 - **T11 量输出，不量「节点已经排上了」**。`?selfcheck` 下 master 链改成 compressor → AnalyserNode → destination（多一个透明节点，不是第二条会让声音翻倍的路径），连点 400ms 内取最新块 peak/rms 的最大值，必须离开数字静音（实测 master peak 0.268 / rms 0.079）。解码完成的录音本身也单独算一遍 peak/rms（实测 0.878 / 0.138，1.24s），因为「解码成功」和「有内容」是两件事。上下文没在跑时只报状态不判失败——后台标签页会被 `attachAudioLifecycle` 挂起，那里静音是正确行为。
 - **T13 只能在 `beforeModelUpdate` 里读眼睑**。核心求值后会把 parameter 恢复成求值前存下的草稿（`saveParameters` / `loadParameters`），所以帧间轮询读到的是动作的半成品，不是动作、表情、眼睑遮罩三方商量完的结果——同一个坑曾把视线跟随误判成坏的，改成帧内采样后 `ParamEyeBallX` 实测跨 −1.00…0.83、`ParamAngleX` 跨 −30.0…22.5。只统计 idle/wake 的静息帧：happy 是故意的 ^_^ 眯眼，boot 还在进场路上。地板取 85%（烘焙眨眼约 180ms 占一个 2.3s 循环，静息约 92% 帧是睁的），实测 85/97 = 87.6%；反向对照把 `exp_03` 强推上去，1310 静息帧只有 16 帧睁眼（1.2%）判失败——一条不会红的断言不算断言。
+- **T14 断的是「页面自己声称的语言」**。`document.documentElement.lang` 必须等于路径派生出的 `LOCALE` 对应的 BCP 47 标签，中英两份 `STRINGS` 的 key 集合必须完全相等且没有空串，`.lang-switch` 的 `href` 必须正好是另一语言的路径。这三件事任何一件飘了，线上看到的就是「英文壳里塞中文」或者 hreflang 指向一个自己不认识的语言。
 - **T6 用 `Animation.currentTime` 虚拟扫时间**，60 秒的周期在几十次强制布局里走完，扫完立刻把相位还原，屏幕上的弹幕不会跳。它不靠计时器（后台标签页的计时器被钳到 1 秒一次），并且如果扫描根本没让车道移动，它会拒绝判过而不是拿一个瞬间冒充 100% 覆盖率。
 - **不做 `HTMLAudioElement` 兜底，也不做 Canvas 不可用时的 DOM 兜底**。合成 blip 已经保证任何点击有声，而这两条降级路径在本机无法验证、针对的是如今不存在的浏览器；留着只会多一堆永远不被执行的分支。
 
-之前挂着「只有窗口真的绘制才能定论」的两个数已经有了：在 531x634、约 60fps 的合成窗口里 13/13 全过，dev 与 `npm run preview` 各跑一趟，T5 真实帧中位数 1.3–1.4ms、p95 1.8–2.2ms（各 53 个绘制帧），画面本身由截图确认——布局不再撞字、角色进场、静息帧眼睛是睁的。仍然残留的是绝对数不可比：帧成本随机器走，而在不绘制的窗口里 T5、T13 会直说「没画、未定」，不会顺手记一个通过。
+之前挂着「只有窗口真的绘制才能定论」的两个数已经有了：在 531x634、约 60fps 的合成窗口里 13/13 全过（T1–T13），dev 与 `npm run preview` 各跑一趟，T5 真实帧中位数 1.3–1.4ms、p95 1.8–2.2ms（各 53 个绘制帧），画面本身由截图确认——布局不再撞字、角色进场、静息帧眼睛是睁的。仍然残留的是绝对数不可比：帧成本随机器走，而在不绘制的窗口里 T5、T13 会直说「没画、未定」，不会顺手记一个通过。**T14 还没有浏览器读数**：加它的那一轮里自动化标签页的主线程被一个注入的死循环卡住了，只能靠构建产物侧的证据（两份 HTML 的 `lang`/`canonical`/`hreflang` 逐条比对、bundle 里 `/^\/zh(?:\/|$)/` 与两份字典确实都在），跑一趟 `?selfcheck` 之前不要当成已过。
 
 性能预算与禁令写在代码注释里，改动 `src/fx/` 前先读：循环内禁 `shadowBlur` / `ctx.filter`（辉光是启动时预烘焙的径向渐变离屏 canvas + `drawImage(..., 'lighter')`）、禁每帧 `measureText`、禁每帧读布局、`dpr` 钳到 2。
 
@@ -98,6 +103,41 @@ Oscillator blip ───┼→ 各自 gain → masterGain(0.22) → DynamicsCom
 
 `public/meguru.aac` 是站点原有的语音素材，保持不动。Mao 压缩包自带的 sound 数据不含 Ciallo 台词，已从仓库排除，不要补进来。
 
+## 双语与 SEO
+
+两种语言是两条 URL，不是一个开关：`/` 是英文，`/zh/` 是中文，由 Vite 的多入口构建各自产出
+一份 HTML（`index.html` 与 `zh/index.html`，见 `vite.config.ts` 的 `rollupOptions.input`），
+共用同一份 JS bundle。语言在运行时从路径派生（`src/i18n.ts` 的 `LOCALE`），**不读
+localStorage**——存了偏好就可能让 `/` 在 `<html lang="en">` 下渲染中文，这正是爬虫和读屏都
+要罚的自相矛盾。语言切换是一个普通 `<a href>`（`src/components/LanguageSwitch.tsx`），带
+`hreflang`/`lang`，不加 `data-no-spawn` 就会在切语言时顺手炸一屏粒子。
+
+文案只翻界面壳：HUD 的连击/最高/音效、首访门、载入失败、错误边界、读屏文案，全在
+`STRINGS` 里，中英 key 必须一一对齐。弹幕（`お嬢様～`、`巡です、巡です～`、`Peach～？`）是
+角色台词不是界面文字，两种语言共用、不翻——翻了就不是那个梗。页脚署名保持 Live2D 官方英文
+原句，不改写。
+
+SEO 侧刻意做的事与刻意不做的事：
+
+- 两个入口各写自己的 `canonical`、`og:url`、`og:locale`（+ `og:locale:alternate`），并互相
+  声明 `hreflang`（`en` / `zh-Hans` / `x-default`），三条一组、双向对称。
+- `robots` 带 `max-image-preview:large`；`public/robots.txt` 指向 `public/sitemap.xml`，
+  sitemap 里每条 URL 都带全三个 alternate。
+- `<noscript>` 写的是真实内容而不是「请开启 JS」，顺带保证 Live2D 署名在脚本失败时仍在场。
+- JSON-LD `WebSite` + `inLanguage`，`workTranslation` 指向另一语言。
+- `vercel.json` 设 `trailingSlash: true`，让 `/zh` 归一到 `/zh/`，避免两条 URL 同时可访问造
+  成重复内容；`/assets/*` 带 hash，给一年 `immutable`，HTML 走 Vercel 默认的
+  `must-revalidate`。
+- **不做** 按 `Accept-Language` 的内容协商跳转：爬虫只看到单一变体，缓存和排名都会被污染。
+- **不做** SPA catch-all（把所有路径 rewrite 到 `/index.html`）：那会让每个错链都返回 200
+  英文页，等于一片软 404。改配 `public/404.html`（`noindex, follow`，中英各一条链接）。
+- 根页语言从中文换成英文是这次的决定，代价是已收录的 `/` 换了内容语言，靠 hreflang 组 +
+  `x-default → /` 把关系重新声明清楚。
+
 ## 部署
 
-Vercel（`vercel.json` + `public/CNAME`，域名 ciallo.de）。`.github/workflows/deploy.yml` 是**死配置**：它推 `FOLDER: build` 而 Vite 产物是 `dist/`，且远端只有 `master` 分支、没有它要推的 `pages`，从未成功跑过。要启用 GitHub Pages 或删除该 workflow 请先确认。
+Vercel（`vercel.json` + `public/CNAME`，域名 ciallo.de），构建 `npm run build` 产出
+`dist/`（两份 HTML + 共享 chunk + `public/` 原样拷贝的 `robots.txt`/`sitemap.xml`/
+`404.html`/`CNAME`）。原先的 `.github/workflows/deploy.yml` 已删除：它推 `FOLDER: build`
+而 Vite 产物是 `dist/`，远端也没有它要推的 `pages` 分支，从未成功跑过，留着只会让人以为有
+第二条流水线。

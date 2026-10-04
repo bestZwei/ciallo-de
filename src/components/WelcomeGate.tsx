@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { t } from '../i18n';
 import './WelcomeGate.css';
 
 type Props = {
@@ -11,6 +12,7 @@ type Props = {
  * silent. `cue.ts` unlocks from any gesture instead.
  */
 const WelcomeGate = ({ onEnter }: Props) => {
+  const strings = t();
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -36,14 +38,14 @@ const WelcomeGate = ({ onEnter }: Props) => {
         {'Ciallo～(∠・ω< )⌒★'}
       </p>
       <p className="gate-note">
-        点屏幕的任何地方，她都会回应你。
+        {strings.gateNote[0]}
         <br />
-        点她本人，效果更明显。
+        {strings.gateNote[1]}
       </p>
       <button className="gate-enter" type="button" ref={buttonRef} onClick={onEnter}>
-        进入
+        {strings.gateEnter}
       </button>
-      <p className="gate-legal">角色素材版权归 Live2D Inc. 所有，详见页脚署名。</p>
+      <p className="gate-legal">{strings.gateLegal}</p>
     </div>
   );
 };
