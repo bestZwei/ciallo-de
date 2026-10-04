@@ -1,5 +1,22 @@
 /* Design tokens. Everything visual reads from here; nothing is hardcoded downstream. */
 
+/* Wordmark face: Zen Maru Gothic 900, subset to the 6 glyphs of "Ciallo～". At 1164 bytes it
+   sits under Vite's inline threshold, so it ships as a data URI inside the hashed CSS — no
+   request, and the fallback can never be seen. Self-hosted rather than a Google Fonts <link>
+   because /zh/ targets mainland traffic, where fonts.googleapis.com does not resolve; a CDN
+   reference would hand those visitors the fallback face and nothing would break loudly
+   enough to notice. font-display is only load-bearing if a bigger subset gets emitted as a
+   real file; `block` avoids the h1 painting in YaHei and then reflowing. License: OFL 1.1,
+   served at /fonts/OFL.txt. */
+@font-face {
+  font-family: 'Ciallo Wordmark';
+  src: url('./fonts/ciallo-wordmark-900.woff2') format('woff2');
+  font-weight: 900;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+43, U+61, U+69, U+6C, U+6F, U+FF5E;
+}
+
 :root {
   color-scheme: dark;
 

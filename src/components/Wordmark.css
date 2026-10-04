@@ -2,23 +2,30 @@
   position: absolute;
   left: 50%;
   top: calc(var(--safe-top) + var(--gap));
-  transform: translateX(-50%);
+  transform: translateX(-50%) rotate(-1.5deg);
   margin: 0;
   z-index: var(--z-hud);
-  font-size: calc(var(--label-font) * 0.8);
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  color: var(--ink-dim);
+  font-family: 'Ciallo Wordmark', var(--font-stack);
+  font-size: calc(var(--label-font) * 1.45);
+  font-weight: 900;
+  letter-spacing: 0.005em;
+  color: var(--ink);
   pointer-events: none;
   white-space: nowrap;
 }
 
 .wordmark-main {
-  /* The wordmark is furniture, so it is deliberately not the brightest thing here. */
-  color: var(--ink);
-}
-
-.wordmark-tld {
-  font-weight: 400;
-  letter-spacing: 0.05em;
+  /* Sticker keyline: eight offset copies of the glyph in the darkest stage colour, so the
+     word is cut out of whatever marquee text drifts behind it. A centred -webkit-text-stroke
+     would bite into the letterform wherever paint-order is unsupported. */
+  text-shadow:
+    2px 0 var(--bg-0),
+    -2px 0 var(--bg-0),
+    0 2px var(--bg-0),
+    0 -2px var(--bg-0),
+    1.5px 1.5px var(--bg-0),
+    -1.5px 1.5px var(--bg-0),
+    1.5px -1.5px var(--bg-0),
+    -1.5px -1.5px var(--bg-0),
+    0 4px 14px rgba(13, 10, 31, 0.8);
 }

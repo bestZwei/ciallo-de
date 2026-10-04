@@ -3,6 +3,7 @@ import type { Tier } from '../fx/world';
 import { BG_HOT, MIN_CONTRAST, SWATCHES, contrastRatio } from '../palette';
 import { viewport } from '../lib/viewport';
 import { LOCALE, LOCALE_PATH, LOCALE_TAG, OTHER_LOCALE, STRINGS } from '../i18n';
+import { onTap } from '../character/controller';
 
 /**
  * Page-internal verification probe, enabled with `?selfcheck`. It asserts the numbers
@@ -506,7 +507,82 @@ const t14 = (): Result => {
   };
 };
 
-const render = (results: Result[]) => {  const id = 'self-check-panel';
+/** T15 — the wordmark is the one place a silent fallback is invisible from the console. A
+    404 on the subset, or a future edit typing 〜 (U+301C) where the @font-face unicode-range
+    only carries ～ (U+FF5E), both render "Ciallo" in Microsoft YaHei and everything else on
+    the page stays correct. Ask the FontFaceSet for the faces matching the actual text. */
+const t15 = async (): Promise<Result> => {
+  const el = document.querySelector<HTMLElement>('.wordmark-main');
+  const text = el?.textContent ?? '';
+  let faces: FontFace[] = [];
+  try {
+    faces = await document.fonts.load('900 1em "Ciallo Wordmark"', text || 'Ciallo～');
+  } catch {
+    faces = [];
+  }
+  const status = faces.length ? faces.map((f) => f.status).join(',') : 'no matching face';
+  /* The tilde is checked separately because U+301C and U+FF5E are indistinguishable in source. */
+  const codepoint = text.includes('\uFF5E') ? 'U+FF5E' : text.includes('\u301C') ? 'U+301C' : 'none';
+  return {
+    id: 'T15 wordmark face',
+    pass: !!el && faces.length > 0 && faces.every((f) => f.status === 'loaded') && codepoint === 'U+FF5E',
+    detail: `${faces.length} face(s) ${status}; tilde ${codepoint}; text "${text}"`,
+  };
+};
+
+/** T16 — drives the keyboard path the way a user does, with a synthetic `keydown`, rather
+    than calling the aim function. Calling the function cannot see the bug this is here for:
+    the handler used to sit on the figure element, which never receives focus because the
+    full-screen FX canvas is above it, so no key event ever reached it and every other layer
+    looked healthy. Then it checks where those taps landed: an off-character landing is
+    indistinguishable from a careless click on screen, and a single repeated landing point
+    means the jitter silently fell back to the centre. Finally it checks the other direction —
+    a focused control must keep its own Space, or the mute button stops working by keyboard. */
+const AIM_SAMPLES = 40;
+
+const pressSpace = (target: EventTarget) => {
+  target.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }));
+};
+
+const t16 = (): Result => {
+  const areas = { head: 0, body: 0 };
+  const points = new Set<string>();
+  let taps = 0;
+  const off = onTap((n) => {
+    taps += 1;
+    if (n.area) areas[n.area] += 1;
+    points.add(`${n.x.toFixed(1)},${n.y.toFixed(1)}`);
+  });
+  for (let k = 0; k < AIM_SAMPLES; k++) pressSpace(document.body);
+  const reached = taps;
+  /* A real keypress targets the focused control, so this mirrors Space on the mute button. */
+  const mute = document.querySelector('.hud-mute');
+  const controlKeepsSpace = mute ? ((): boolean => {
+    taps = 0;
+    pressSpace(mute);
+    return taps === 0;
+  })() : null;
+  off();
+
+  const misses = reached - areas.head - areas.body;
+  const spread = points.size;
+  return {
+    id: 'T16 keyboard aim',
+    pass:
+      reached === AIM_SAMPLES &&
+      misses === 0 &&
+      areas.head > 0 &&
+      areas.body > 0 &&
+      spread >= AIM_SAMPLES * 0.7 &&
+      controlKeepsSpace !== false,
+    detail: `${reached}/${AIM_SAMPLES} space presses produced a tap, ${misses} off her, ${points.size} distinct points, head ${areas.head} / body ${areas.body}; focused control ${
+      controlKeepsSpace === null ? 'absent (no Web Audio)' : controlKeepsSpace ? 'kept its Space' : 'had it stolen'
+    }`,
+  };
+};
+
+const render = (results: Result[]) => {
+  const id = 'self-check-panel';
   let panel = document.getElementById(id);
   if (!panel) {
     panel = document.createElement('div');
@@ -552,10 +628,12 @@ export const runSelfCheck = async () => {
   await wait(300);
   const fx = p.fx;
   /* T5, T11 and T13 are the only assertions that wait on real time — a drawn frame and a
-     rendered audio block. The rest run in one synchronous pass. */
+     rendered audio block. T15 awaits the FontFaceSet, which resolves in a microtask.
+     The rest run in one synchronous pass. */
   const frameCost = await t5(fx, p.step, p.drainFrames);
   const audible = await t11(p.audio);
   const eyes = await t13();
+  const face = await t15();
   render([
     t1(),
     t2(fx),
@@ -571,5 +649,7 @@ export const runSelfCheck = async () => {
     t12(),
     eyes,
     t14(),
+    face,
+    t16(),
   ]);
 };

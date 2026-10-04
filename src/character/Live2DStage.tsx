@@ -5,11 +5,31 @@ import { publishProbe } from '../lib/devflag';
 import { resolveTier } from '../fx/world';
 import { watchViewport } from '../lib/viewport';
 import { CharacterRig, type CubismCoreModel } from './rig';
-import { MAO_CENTER_FIX, MAO_MODEL_URL, MOOD_EXPRESSION, MOOD_MOTION, loadLive2D, type HitArea } from './live2d';
-import { dispatchTap, moods, onMoodChange, setBridge, type CharacterBridge, type Rect } from './controller';
+import {
+  MAO_CENTER_FIX,
+  MAO_MODEL_URL,
+  MOOD_EXPRESSION,
+  MOOD_MOTION,
+  hitAreaFromModel,
+  loadLive2D,
+  type HitTestModel,
+} from './live2d';
+import {
+  dispatchCharacterTap,
+  moods,
+  onMoodChange,
+  setBridge,
+  type CharacterBridge,
+  type Rect,
+} from './controller';
 import './Live2DStage.css';
 
 type CoreModel = CubismCoreModel & { getParameterIndex(id: string): number };
+
+type Point2 = { x: number; y: number };
+
+/** Things whose Space/Enter activation must survive the page-level key handler. */
+const FOCUSABLE_SELECTOR = 'a[href], button, input, textarea, select, [contenteditable]';
 
 /** Only the members this component touches, so an upstream type change surfaces as
     one cast rather than page-wide fallout. */
@@ -18,7 +38,8 @@ type LiveModel = {
   y: number;
   scale: { x: number; y: number; set: (v: number) => void };
   focus: (x: number, y: number) => void;
-  hitTest: (x: number, y: number) => string[];
+  /** Implemented by the library itself (cubism4.es.js:4915), not a Pixi 7 API. */
+  toModelPosition: (position: Point2, result: Point2) => Point2;
   motion: (group: string) => unknown;
   expression: (id?: string) => unknown;
   destroy: (options?: unknown) => void;
@@ -30,7 +51,7 @@ type LiveModel = {
     focusController: { x: number; y: number; targetX: number; targetY: number };
     on: (event: string, fn: () => void) => unknown;
     off: (event: string, fn: () => void) => unknown;
-  };
+  } & HitTestModel;
 };
 
 type PixiApp = {
@@ -49,9 +70,6 @@ const deferLoad = (fn: () => void): (() => void) => {
   const id = window.setTimeout(fn, 300);
   return () => window.clearTimeout(id);
 };
-
-const asHitArea = (value: string | undefined): HitArea | null =>
-  value === 'head' || value === 'body' ? value : null;
 
 const Live2DStage = () => {
   const figureRef = useRef<HTMLDivElement>(null);
@@ -98,9 +116,19 @@ const Live2DStage = () => {
       model.y = (box.h - natural.height * s) / 2 + box.h * MAO_CENTER_FIX.y;
     };
 
+    /** Container pixels are not model-canvas units: the library's own hitTest runs
+        `toModelPosition` before comparing against drawable bounds, so this must too.
+        One reused scratch point, because `toModelPosition` would otherwise clone per tap. */
+    const aim: Point2 = { x: 0, y: 0 };
+
     const bridge: CharacterBridge = {
-      hitAreaAt: (clientX, clientY) =>
-        model ? asHitArea(model.hitTest(clientX - rect.left, clientY - rect.top)[0]) : null,
+      hitAreaAt: (clientX, clientY) => {
+        if (!model) return null;
+        aim.x = clientX - rect.left;
+        aim.y = clientY - rect.top;
+        const p = model.toModelPosition(aim, aim);
+        return hitAreaFromModel(model.internalModel, p.x, p.y);
+      },
       focusAt: (clientX, clientY, pinned) => {
         if (!model) return;
         if (pinned) model.focus(rect.width / 2, rect.height / 2);
@@ -207,17 +235,24 @@ const Live2DStage = () => {
     const cancel = deferLoad(boot);
     const offMood = onMoodChange(applyMood);
 
+    /** Page-level, not on `host`: the full-screen FX canvas sits above the figure, so a
+        pointerdown never targets it and the element never gains focus — a keydown listener
+        attached to `host` is unreachable in normal play. */
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== ' ' && e.key !== 'Enter') return;
+      /* Space and Enter belong to whatever the user actually focused. Stealing them would
+         break keyboard activation of the mute button, the language switch, the repo link and
+         the gate's enter button — and holding Enter on the gate would startle her at the same
+         moment it dismisses itself. */
+      if ((e.target as Element | null)?.closest?.(FOCUSABLE_SELECTOR)) return;
       e.preventDefault();
-      const r = host.getBoundingClientRect();
-      dispatchTap(r.left + r.width / 2, r.top + r.height * 0.35);
+      dispatchCharacterTap();
     };
-    host.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keydown', onKeyDown);
 
     return () => {
       dead = true;
-      host.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keydown', onKeyDown);
       cancel();
       offMood();
       unwatch();

@@ -5,7 +5,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: calc(4px * var(--scale));
+  gap: calc(6px * var(--scale));
   padding-right: var(--gap);
   z-index: var(--z-hud);
   /* The band spans the top of the screen, so it must not eat taps. Only the control
@@ -16,15 +16,14 @@
   letter-spacing: 0.04em;
 }
 
-.hud-combo,
-.hud-best {
-  margin: 0;
-}
-
-.hud-combo {
+/* Readout is one baseline-aligned line and the controls are one equal-height row: two
+   blocks, not four floating items. The whole column has to stay inside the marquee's
+   --keep-top band, so height here is a budget, not a preference. */
+.hud-readout {
   display: flex;
   align-items: baseline;
   gap: calc(6px * var(--scale));
+  margin: 0;
 }
 
 .hud-num {
@@ -35,11 +34,31 @@
   font-variant-numeric: tabular-nums;
 }
 
+.hud-best {
+  padding-left: calc(10px * var(--scale));
+  /* Stronger than --hairline on purpose: collapsing the readout onto one line moved the
+     divider from decorative to load-bearing, and 14% white reads as nothing at 13px. */
+  border-left: 1px solid rgba(246, 242, 255, 0.3);
+}
+
+.hud-best span {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-controls {
+  display: flex;
+  align-items: center;
+  gap: calc(8px * var(--scale));
+}
+
 .hud-mute {
   pointer-events: auto;
-  min-height: 44px;
-  min-width: 44px;
-  padding: calc(6px * var(--scale)) calc(12px * var(--scale));
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
   font: inherit;
   color: var(--ink);
   background: rgba(13, 10, 31, 0.55);

@@ -28,6 +28,49 @@ export const MOOD_MOTION: Record<HitArea, string> = {
   body: 'TapBody',
 };
 
+export type HitBounds = { x: number; y: number; width: number; height: number };
+
+/** The slice of the Cubism internal model needed to hit-test by Id. */
+export type HitTestModel = {
+  settings: { json: unknown };
+  coreModel: { getDrawableIndex(id: string): number };
+  getDrawableBounds(index: number, out: HitBounds): HitBounds;
+};
+
+/**
+ * `model.hitTest()` cannot be used with this model. pixi-live2d-display builds its hit table
+ * as `this.hitAreas[def.name] = def` (cubism4.es.js:4329) keyed by the model3.json `Name`, and
+ * Mao ships both areas with `"Name": ""` — so `HitAreaHead` and `HitAreaBody` collapse onto one
+ * empty-string key (only the last survives) and `hitTest()` returns `[""]`. Every touch on her
+ * would read as a miss, which silently kills the strong feedback tier, TapHead/TapBody and the
+ * impact jiggle. `Id` is the field that is actually populated, so match on that instead and the
+ * empty names stop mattering. Hit areas are declared head-first in Mao's model3.json, so an
+ * overlap resolves to the smaller, more specific region.
+ */
+const AREA_BY_ID: [RegExp, HitArea][] = [
+  [/head/i, 'head'],
+  [/body/i, 'body'],
+];
+
+const hitBounds: HitBounds = { x: 0, y: 0, width: 0, height: 0 };
+
+export const hitAreaFromModel = (
+  internal: HitTestModel,
+  x: number,
+  y: number,
+): HitArea | null => {
+  const { HitAreas } = (internal.settings.json ?? {}) as { HitAreas?: { Id: string }[] };
+  for (const def of HitAreas ?? []) {
+    const area = AREA_BY_ID.find(([pattern]) => pattern.test(def.Id))?.[1];
+    if (!area) continue;
+    const index = internal.coreModel.getDrawableIndex(def.Id);
+    if (index < 0) continue;
+    const b = internal.getDrawableBounds(index, hitBounds);
+    if (b.x <= x && x <= b.x + b.width && b.y <= y && y <= b.y + b.height) return area;
+  }
+  return null;
+};
+
 /**
  * Mao's bounding box is the union of every drawable, which is not where her visible
  * art sits: measured against the drawn alpha centroid she lands 36px left and 14px

@@ -1,13 +1,13 @@
 .lang-switch {
-  /* .hud takes pointer events away from the whole band; controls opt back in. */
+  /* .hud takes pointer events away from the whole band; controls opt back in. Same
+     height as the mute button so the pair reads as one group. */
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  height: 44px;
   min-width: 44px;
-  padding: calc(6px * var(--scale)) calc(12px * var(--scale));
-  font: inherit;
+  padding: 0 calc(14px * var(--scale));
   text-decoration: none;
   color: var(--ink-dim);
   background: rgba(13, 10, 31, 0.55);

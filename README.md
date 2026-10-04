@@ -41,7 +41,9 @@ npm run preview   # 预览构建产物
 
 同一条规则在眼睛上实测到两次：`exp_03` 写的是 `ParamEyeLOpen = 0 Multiply`，叠在眨眼上直接把眼睑乘到 0，实测 idle 下 150 帧里 149 帧她是闭眼的；以及 rig 自己排了一次 150ms 的播种眨眼，而 Mao 的动作文件本来就烘焙了眨眼（`mtn_01` 一个 5.57s 循环里闭两次），两者叠加成约 1.6s 一次。现在眨眼归动作，rig 只保留乘性的眼睑遮罩（drowsy 0.25 / asleep 0），既不抢写入者，又仍然压得住表情。
 
-输入只有一条路径：`src/lib/input.ts` 绑 `pointerdown` / `pointermove`，坐标只用 `clientX/clientY`，不 `preventDefault()`（改用 CSS `touch-action`）。唯一的「不响应」分支是元素带 `data-no-spawn`（HUD、弹窗、署名链接）。
+输入只有一条路径：`src/lib/input.ts` 绑 `pointerdown` / `pointermove`，坐标只用 `clientX/clientY`，不 `preventDefault()`（改用 CSS `touch-action`）。唯一的「不响应」分支是元素带 `data-no-spawn`（HUD、弹窗、署名链接）。键盘是第二条入口，且**必须挂在 `window` 上**：`.l2d-figure` 上面盖着全屏 canvas，它永远不会成为 pointerdown 的 target，也就永远拿不到焦点，挂在其上的 keydown 是收不到事件的死代码。页面级监听同时带一个守卫 —— 焦点在 `a[href]/button/input/textarea/select/[contenteditable]` 上时空格与回车归该控件，否则静音键和首访门都会被键盘抢不走（T16 正反两面都在断言这件事）。
+
+命中判定**不能**走 `model.hitTest()`。pixi-live2d-display 用 `this.hitAreas[def.name] = def` 建命中表（`cubism4.es.js:4329`），而 Mao 的 `model3.json` 里两条 `HitAreas` 的 `Name` 都是空串，于是 `HitAreaHead` 与 `HitAreaBody` 撞进同一个 `""` 键、只剩后者，`hitTest()` 恒返回 `[""]`。当时接它的 `asHitArea` 只认 `'head'|'body'`，所以「点她本人效果更明显」这一档、`TapHead`/`TapBody` 动作和受力抖动**一次都没有真正触发过**，而首访门的文案一直在承诺这件事——`HitAreaHead`/`HitAreaBody` 在 moc3 里各出现 1 次、且 Part 一律叫 `Part`/`PartArmLA` 这种名字，说明它们是官方样例惯用的隐形命中 drawable，`getDrawableIndex` 有效，坏的只有 `Name` 这一个字段。现在改成按 `Id` 取 drawable bounds 自己判（`live2d.ts` 的 `hitAreaFromModel`），并且调用前必须先跑 `toModelPosition`：容器像素不是模型画布单位，库自己的 `Live2DModel.hitTest` 也是先变换再比对。T16 守的就是这条路径。
 
 视口是连续量不是布尔：`scale = clamp(sqrt(w*h)/sqrt(1440*900), 0.55, 1.35)`，角色尺寸、标签字号、粒子上限、弹幕字号全部乘它。尺寸、输入能力（`pointer: coarse`）、性能是三根互相独立的轴，旧站用一个 `innerWidth<=768` 同时当三者用，分屏窗口下必然误判。
 
@@ -72,7 +74,7 @@ Oscillator blip ───┼→ 各自 gain → masterGain(0.22) → DynamicsCom
 
 ## 自检
 
-打开 `?selfcheck` 会在左下角跑一页内断言（`src/dev/selfCheck.ts`），数值同时 `console.table`。断言项十四：对比度、点击偏移必须为 0、同毫秒 200 连点全部被接受、池满时 `recycled` 递增但最新标签仍存活、帧成本、弹幕 8 档 8 色且背景不空窗、语音闸门、连续缩放区间、reduced-motion、StrictMode 下「一次点击 = 一个标签 + 一个 blip」、点击真的推出了声波、弹幕不穿过 wordmark/HUD/署名、静息帧里她的眼睑确实是睁开的、以及 `<html lang>` 与路径派生的语言一致且中英两份字典 key 对齐。探测第一步是先点「进入」把首访弹窗关掉再量——弹窗是带 `data-no-spawn` 的模态层，对着它跑只会量到一排「按设计拒绝」，而 `ciallo.seen` 按 origin 存，换一个 dev 端口就是一次首访。除 T5、T11、T13 外其余十一项在同一趟同步流程里跑完，所以它们的读数与窗口是否在绘制无关。
+打开 `?selfcheck` 会在左下角跑一页内断言（`src/dev/selfCheck.ts`），数值同时 `console.table`。断言项十六：对比度、点击偏移必须为 0、同毫秒 200 连点全部被接受、池满时 `recycled` 递增但最新标签仍存活、帧成本、弹幕 8 档 8 色且背景不空窗、语音闸门、连续缩放区间、reduced-motion、StrictMode 下「一次点击 = 一个标签 + 一个 blip」、点击真的推出了声波、弹幕不穿过 wordmark/HUD/署名、静息帧里她的眼睑确实是睁开的、`<html lang>` 与路径派生的语言一致且中英两份字典 key 对齐、字标的子集字体确实 `loaded` 且波浪号在 `unicode-range` 里、键盘空格必须每一次都真的变成她身上的 tap（头/身两种动作都到得了，且焦点在控件上时不许抢）。探测第一步是先点「进入」把首访弹窗关掉再量——弹窗是带 `data-no-spawn` 的模态层，对着它跑只会量到一排「按设计拒绝」，而 `ciallo.seen` 按 origin 存，换一个 dev 端口就是一次首访。除 T5、T11、T13、T15 外其余十二项在同一趟同步流程里跑完，所以它们的读数与窗口是否在绘制无关。
 
 刻意偏离原方案的这几处，都是为了量到真东西：
 
@@ -80,10 +82,12 @@ Oscillator blip ───┼→ 各自 gain → masterGain(0.22) → DynamicsCom
 - **T11 量输出，不量「节点已经排上了」**。`?selfcheck` 下 master 链改成 compressor → AnalyserNode → destination（多一个透明节点，不是第二条会让声音翻倍的路径），连点 400ms 内取最新块 peak/rms 的最大值，必须离开数字静音（实测 master peak 0.268 / rms 0.079）。解码完成的录音本身也单独算一遍 peak/rms（实测 0.878 / 0.138，1.24s），因为「解码成功」和「有内容」是两件事。上下文没在跑时只报状态不判失败——后台标签页会被 `attachAudioLifecycle` 挂起，那里静音是正确行为。
 - **T13 只能在 `beforeModelUpdate` 里读眼睑**。核心求值后会把 parameter 恢复成求值前存下的草稿（`saveParameters` / `loadParameters`），所以帧间轮询读到的是动作的半成品，不是动作、表情、眼睑遮罩三方商量完的结果——同一个坑曾把视线跟随误判成坏的，改成帧内采样后 `ParamEyeBallX` 实测跨 −1.00…0.83、`ParamAngleX` 跨 −30.0…22.5。只统计 idle/wake 的静息帧：happy 是故意的 ^_^ 眯眼，boot 还在进场路上。地板取 85%（烘焙眨眼约 180ms 占一个 2.3s 循环，静息约 92% 帧是睁的），实测 85/97 = 87.6%；反向对照把 `exp_03` 强推上去，1310 静息帧只有 16 帧睁眼（1.2%）判失败——一条不会红的断言不算断言。
 - **T14 断的是「页面自己声称的语言」**。`document.documentElement.lang` 必须等于路径派生出的 `LOCALE` 对应的 BCP 47 标签，中英两份 `STRINGS` 的 key 集合必须完全相等且没有空串，`.lang-switch` 的 `href` 必须正好是另一语言的路径。这三件事任何一件飘了，线上看到的就是「英文壳里塞中文」或者 hreflang 指向一个自己不认识的语言。
+- **T15 盯的是「字体静默回退」**。`document.fonts.load('900 1em "Ciallo Wordmark"', <字标实际文本>)` 必须返回至少一个 `status === 'loaded'` 的 face，且文本里的波浪号必须是 `U+FF5E`。传真实文本而不是写死字符串，是因为 `unicode-range` 只覆盖六个字形：字标哪天改字、或者有人把 ～ 打成形同的 〜（`U+301C`），匹配到的 face 数就变成 0，页面照常渲染、只是回退成雅黑，控制台一声不响。这条断言是这两个失败模式的唯一出口。
+- **T16 用合成 `keydown` 驱动键盘路径，而不是直接调用落点函数**。直接调函数看不见这条断言存在的理由：处理器原先挂在 `.l2d-figure` 上，而全屏 FX canvas 盖在它上面，pointerdown 的 target 永远是 canvas，那个元素在正常游玩中根本拿不到焦点 —— 于是没有键盘事件会到它那儿，其余各层却全都健康得很。现在 40 次 `space` 打在 `document.body` 上，必须每次都产出一个 tap；再查落点质量（`area` 为空 0 次、头与身都得有、至少 28 个不同坐标，全同点即说明退回了兜底中心）；最后反向查一遍：焦点在静音键上时空格必须**不**产生 tap，否则等于用页面级监听换掉了控件的键盘激活。
 - **T6 用 `Animation.currentTime` 虚拟扫时间**，60 秒的周期在几十次强制布局里走完，扫完立刻把相位还原，屏幕上的弹幕不会跳。它不靠计时器（后台标签页的计时器被钳到 1 秒一次），并且如果扫描根本没让车道移动，它会拒绝判过而不是拿一个瞬间冒充 100% 覆盖率。
 - **不做 `HTMLAudioElement` 兜底，也不做 Canvas 不可用时的 DOM 兜底**。合成 blip 已经保证任何点击有声，而这两条降级路径在本机无法验证、针对的是如今不存在的浏览器；留着只会多一堆永远不被执行的分支。
 
-之前挂着「只有窗口真的绘制才能定论」的两个数已经有了：在 531x634、约 60fps 的合成窗口里 13/13 全过（T1–T13），dev 与 `npm run preview` 各跑一趟，T5 真实帧中位数 1.3–1.4ms、p95 1.8–2.2ms（各 53 个绘制帧），画面本身由截图确认——布局不再撞字、角色进场、静息帧眼睛是睁的。仍然残留的是绝对数不可比：帧成本随机器走，而在不绘制的窗口里 T5、T13 会直说「没画、未定」，不会顺手记一个通过。**T14 还没有浏览器读数**：加它的那一轮里自动化标签页的主线程被一个注入的死循环卡住了，只能靠构建产物侧的证据（两份 HTML 的 `lang`/`canonical`/`hreflang` 逐条比对、bundle 里 `/^\/zh(?:\/|$)/` 与两份字典确实都在），跑一趟 `?selfcheck` 之前不要当成已过。
+之前挂着「只有窗口真的绘制才能定论」的两个数已经有了：在 531x634、约 60fps 的合成窗口里 13/13 全过（T1–T13），dev 与 `npm run preview` 各跑一趟，T5 真实帧中位数 1.3–1.4ms、p95 1.8–2.2ms（各 53 个绘制帧），画面本身由截图确认——布局不再撞字、角色进场、静息帧眼睛是睁的。仍然残留的是绝对数不可比：帧成本随机器走，而在不绘制的窗口里 T5、T13 会直说「没画、未定」，不会顺手记一个通过。**T14、T15、T16 还没有浏览器读数**：加 T14 的那一轮里自动化标签页的主线程被一个注入的死循环卡住了，之后分类器又拦住了浏览器导航（它以那次事故为依据，即使卡死的标签页已经不在），所以只能靠构建产物侧的证据——两份 HTML 的 `lang`/`canonical`/`hreflang` 逐条比对、bundle 里 `/^\/zh(?:\/|$)/` 与两份字典确实都在、CSS 里 `@font-face` 带着那条 data URI。命中判定那处修复同样只有静态依据（库源码的建表方式、`model3.json` 里两个空 `Name`、moc3 里 `HitAreaHead`/`HitAreaBody` 各一次），**点她本人到底有没有终于变强，要等 T16 在浏览器里跑绿才能说**。跑一趟 `?selfcheck` 之前不要当成已过。
 
 性能预算与禁令写在代码注释里，改动 `src/fx/` 前先读：循环内禁 `shadowBlur` / `ctx.filter`（辉光是启动时预烘焙的径向渐变离屏 canvas + `drawImage(..., 'lighter')`）、禁每帧 `measureText`、禁每帧读布局、`dpr` 钳到 2。
 
@@ -102,6 +106,14 @@ Oscillator blip ───┼→ 各自 gain → masterGain(0.22) → DynamicsCom
 > This content uses sample data owned and copyrighted by Live2D Inc.
 
 `public/meguru.aac` 是站点原有的语音素材，保持不动。Mao 压缩包自带的 sound 数据不含 Ciallo 台词，已从仓库排除，不要补进来。
+
+字标 **Ciallo～** 用 **Zen Maru Gothic 900**（OFL 1.1，授权文本随附于 `public/fonts/OFL.txt`，线上可访问 `/fonts/OFL.txt`），只取 `C i a l l o ～` 六个字形，裁完 1164 字节，落在 `src/styles/fonts/ciallo-wordmark-900.woff2`。低于 Vite 的 4096 内联阈值，因此以 data URI 打进带 hash 的 CSS：不多一个请求，也不存在回退字体被看到的一瞬。
+
+不引 Google Fonts `<link>`：`/zh/` 面向国内访问，`fonts.googleapis.com` 在那边解析不了，引了等于中文用户永久看到雅黑，而且不会报错。**改动字标文字后要重取子集**，注意码位——项目里用的是 `U+FF5E`（～），不是长得一样的 `U+301C`（〜），`@font-face` 的 `unicode-range` 只覆盖前者，写错那个字符会静默掉出字体之外（自检 T15 就是盯这件事的）：
+
+```bash
+curl -A "<Chrome UA>" "https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@900&text=Ciallo%EF%BD%9E&display=swap"
+```
 
 ## 双语与 SEO
 

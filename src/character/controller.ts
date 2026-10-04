@@ -80,6 +80,34 @@ export const dispatchTap = (x: number, y: number) => {
 };
 
 /**
+ * Keyboard / gamepad aim. A fixed point reads dead after half a dozen presses, but a
+ * miss would demote the tap to the weak "anywhere" tier — the tier a mouse user gets for
+ * being careless — so every candidate has to resolve to a real hit area before it is
+ * taken. Hence rejection sampling against `hitAreaAt` rather than a blind offset, which
+ * means a candidate that never hits costs nothing instead of quietly downgrading the
+ * keyboard path. The band is narrow horizontally because her hit areas are vertical
+ * strips around the body, and full-height vertically so TapHead and TapBody both appear.
+ */
+const AIM_TRIES = 6;
+
+export const dispatchCharacterTap = () => {
+  const r = bridge?.rect();
+  if (r) {
+    for (let i = 0; i < AIM_TRIES; i++) {
+      const x = r.x + r.w * (0.5 + (Math.random() - 0.5) * 0.44);
+      const y = r.y + r.h * (0.12 + Math.random() * 0.66);
+      if (bridge?.hitAreaAt(x, y)) {
+        dispatchTap(x, y);
+        return;
+      }
+    }
+  }
+  /* No candidate landed — report the centre, which is what the old fixed aim approximated. */
+  const c = characterCenter();
+  dispatchTap(c.x, c.y);
+};
+
+/**
  * Character-side input wiring. The FX layer subscribes separately through
  * {@link onTap}, so a click that misses the character still gets feedback.
  */

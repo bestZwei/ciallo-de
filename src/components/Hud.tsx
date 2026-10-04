@@ -54,29 +54,57 @@ const Hud = () => {
 
   return (
     <div className="hud" data-no-spawn>
-      <p className="hud-combo">
+      <p className="hud-readout">
         <span className="hud-num" ref={comboRef}>
           0
         </span>
         <span className="hud-cap">{strings.combo}</span>
+        <span className="hud-best">
+          {strings.best} <span ref={bestRef}>0</span>
+        </span>
       </p>
-      <p className="hud-best">
-        {strings.best} <span ref={bestRef}>0</span>
-      </p>
-      {hasWebAudio() && (
-        <button
-          className="hud-mute"
-          type="button"
-          aria-pressed={muted}
-          onClick={() => setMuted(toggleMuted())}
-        >
-          {muted ? strings.soundOff : strings.soundOn}
-        </button>
-      )}
-      <LanguageSwitch />
+      <div className="hud-controls">
+        {hasWebAudio() && (
+          <button
+            className="hud-mute"
+            type="button"
+            aria-pressed={muted}
+            aria-label={muted ? strings.soundOff : strings.soundOn}
+            onClick={() => setMuted(toggleMuted())}
+          >
+            <SpeakerIcon muted={muted} />
+          </button>
+        )}
+        <LanguageSwitch />
+      </div>
       <p className="sr-only" aria-live="polite" ref={liveRef} />
     </div>
   );
 };
+
+/** State has to read at 20px, so the waves and the cross are different shapes rather
+    than two shades of the same glyph. Text is carried by aria-label instead. */
+const SpeakerIcon = ({ muted }: { muted: boolean }) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+    <path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" />
+    {muted ? (
+      <path
+        d="M16.5 9.5l5 5m0-5l-5 5"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        fill="none"
+      />
+    ) : (
+      <path
+        d="M16 9.5a4 4 0 0 1 0 5m2.8-7.5a7.5 7.5 0 0 1 0 10"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        fill="none"
+      />
+    )}
+  </svg>
+);
 
 export default Hud;
