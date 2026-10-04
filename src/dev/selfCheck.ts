@@ -433,9 +433,12 @@ const t12 = (): Result => {
 
 /** T13 — she has to actually look at you. Both eye defects this build shipped were
     "the lids never opened", and no other assertion can see that. */
-/** Sample long enough to hold a whole `mtn_01` loop: its two baked blinks put both lids below
-    0.5 for ~300ms of its 5.57s (read out of the motion file, and why a clean window should land
-    near 95% open). A 1600ms window can sit between the blinks and never see one. */
+/** Sample long enough to hold a whole `mtn_01` loop. Integrating that file's `ParamEye[LR]Open`
+    Bezier segments: each baked blink puts both lids below 0.5 for ~150ms, twice per 5.57s, so
+    5.4% of a loop. A 6s window is 1.08 loops, so it catches two or three blinks depending on the
+    phase it starts in — the honest prediction for a clean run is 92.4% to 94.6%, not a point.
+    Measured: 91.8% and 92.5% (30 and 27 shut frames, against 27.7 predicted for three blinks).
+    A 1600ms window can sit between the blinks and never see one. */
 const EYES_MS = 6000;
 /** What actually made two runs disagree (74/98 and 234/296 open) is not the blink schedule: the
     suite's own audio-unlock click lands on her, and the animation it starts runs 3.5-9.4s while
