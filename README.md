@@ -133,6 +133,11 @@ SEO 侧刻意做的事与刻意不做的事：
 
 - 两个入口各写自己的 `canonical`、`og:url`、`og:locale`（+ `og:locale:alternate`），并互相
   声明 `hreflang`（`en` / `zh-Hans` / `x-default`），三条一组、双向对称。
+- **没有 `og:image`，`twitter:card` 是 `summary` 而不是 `summary_large_image`**：卡片图只接受
+  这一页真实渲染出来的截图。声明一个不存在的 `/og.png` 不是中性的——认 `og:image` 的爬虫会去
+  取它、拿到 404，然后回落到无图，标签于是成了超额承诺。补真图时按 1200×630 / DPR 1 截
+  （DevTools 设备工具栏自定义视口，该尺寸下 `--scale ≈ 0.764`，她与弹幕、HUD 都在画内），
+  同时把 `og:image:width/height` 与像素对齐。
 - `robots` 带 `max-image-preview:large`；`public/robots.txt` 指向 `public/sitemap.xml`，
   sitemap 里每条 URL 都带全三个 alternate。
 - `<noscript>` 写的是真实内容而不是「请开启 JS」，顺带保证 Live2D 署名在脚本失败时仍在场。
