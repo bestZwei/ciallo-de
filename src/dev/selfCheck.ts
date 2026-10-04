@@ -41,6 +41,9 @@ type ModelView = {
     };
     on: (event: string, fn: () => void) => unknown;
     off: (event: string, fn: () => void) => unknown;
+    /** Read only: the library's MotionState names the group currently playing, which is the one
+        signal that separates "mood is idle" from "she is actually at rest". */
+    motionManager?: { state?: { currentGroup?: string } };
   };
 };
 
@@ -430,8 +433,21 @@ const t12 = (): Result => {
 
 /** T13 — she has to actually look at you. Both eye defects this build shipped were
     "the lids never opened", and no other assertion can see that. */
-const EYES_MS = 1600;
-/** A baked blink costs ~180ms of a 2.3s cycle, so resting eyes are open ~92% of frames. */
+/** Sample long enough to hold a whole `mtn_01` loop: its two baked blinks put both lids below
+    0.5 for ~300ms of its 5.57s (read out of the motion file, and why a clean window should land
+    near 95% open). A 1600ms window can sit between the blinks and never see one. */
+const EYES_MS = 6000;
+/** What actually made two runs disagree (74/98 and 234/296 open) is not the blink schedule: the
+    suite's own audio-unlock click lands on her, and the animation it starts runs 3.5-9.4s while
+    the mood that triggered it expires in under 1.6s. `TapHead[2]` holds both lids below 0.5 for
+    8.36s of its 9.23s loop. Wait the motion out before sampling, and say so if it never ends. */
+const MOTION_SETTLE_MS = 12000;
+/** Half-open counts as open: this grades the lid *level* instead of the bottom of every blink
+    curve. What that gives up is real — a lid parked between 0.5 and 0.9 now passes, so T13
+    claims only "she opens her eyes", not "she never squints". What it keeps is the defect that
+    actually shipped: `exp_03` multiplies ParamEyeLOpen to 0, both eyes have to clear the bar, and
+    as a reverse control that measured 16 open frames in 1310 neutral ones (1.2%). */
+const EYES_OPEN_LEVEL = 0.5;
 const EYES_OPEN_FLOOR = 0.85;
 const MIN_EYES_FRAMES = 30;
 
@@ -445,23 +461,52 @@ const t13 = async (): Promise<Result> => {
   if (!im || !core || !moods) {
     return { id: 'T13 eyes open', pass: false, detail: 'model or mood machine never published' };
   }
+  /**
+   * Mood is not the same question as motion. A tap flips `happy` for under 1.6s but starts an
+   * animation seconds longer, and Mao's `TapHead[2]` holds both lids below 0.5 for 8.36s of its
+   * 9.23s loop — so the frames right after a tap are mood-idle and visually shut. Sample only
+   * while the library's current group is the idle one. A missing `state` object gets its own
+   * group name rather than "Idle": a refactor upstream must fail loudly here instead of quietly
+   * turning this assertion back into a coin flip.
+   */
+  const state = im.motionManager?.state;
+  const group = () => (state ? state.currentGroup ?? 'Idle' : 'no-motion-state');
+  const resting = () => group() === 'Idle';
   /* Happy is a deliberate ^_^ squint and boot is still arriving, so the claim is only
      about resting eyes. */
   const neutral = () => moods.mood === 'idle' || moods.mood === 'wake';
   const settle = performance.now() + 2500;
   while (!neutral() && performance.now() < settle) await wait(100);
+  /* Kept separate from the mood wait because the two budgets are different sizes. */
+  const rest = performance.now() + MOTION_SETTLE_MS;
+  while (!resting() && performance.now() < rest) await wait(100);
+  if (!resting()) {
+    return {
+      id: 'T13 eyes open',
+      pass: false,
+      detail: `${group()} motion still playing after ${(MOTION_SETTLE_MS / 1000).toFixed(0)}s — no resting window to sample`,
+    };
+  }
 
   const iL = core.getParameterIndex('ParamEyeLOpen');
   const iR = core.getParameterIndex('ParamEyeROpen');
   let frames = 0;
   let open = 0;
+  let skipped = 0;
   /* Between frames the core restores the values it saved before evaluating, so a poll
      reads the motion's draft rather than what expression, blink and lid mask agreed on.
      The hook is the only place the final number exists. */
   const hook = () => {
-    if (!neutral()) return;
+    if (!neutral() || !resting()) {
+      skipped++;
+      return;
+    }
     frames++;
-    if (core.getParameterValueByIndex(iL) >= 0.9 && core.getParameterValueByIndex(iR) >= 0.9) open++;
+    if (
+      core.getParameterValueByIndex(iL) >= EYES_OPEN_LEVEL &&
+      core.getParameterValueByIndex(iR) >= EYES_OPEN_LEVEL
+    )
+      open++;
   };
   im.on('beforeModelUpdate', hook);
   const until = performance.now() + EYES_MS;
@@ -476,9 +521,11 @@ const t13 = async (): Promise<Result> => {
     detail:
       frames < MIN_EYES_FRAMES
         ? `${frames} neutral frames in ${EYES_MS}ms — not painting, lid level undetermined`
-        : `${open}/${frames} neutral frames open (${(fraction * 100).toFixed(1)}%), mood ${moods.mood}, floor ${(
-            EYES_OPEN_FLOOR * 100
-          ).toFixed(0)}%`,
+        : `${open}/${frames} neutral frames open (${(fraction * 100).toFixed(1)}%), mood ${
+            moods.mood
+          }, ${group()}, ${skipped} frames skipped, floor ${(EYES_OPEN_FLOOR * 100).toFixed(0)}%, lid >= ${EYES_OPEN_LEVEL} over ${(
+            EYES_MS / 1000
+          ).toFixed(0)}s`,
   };
 };
 
